@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <title>조기상환 계산기 — 지금 갚으면 얼마나 남을까</title>
+    <meta
+      name="description"
+      content="대출을 중간에 갚았을 때 실제 순이득이 얼마이고 언제 돌아오는지 계산합니다. 기간 단축과 납입액 재산정을 나란히 비교합니다. 입력값은 저장되거나 전송되지 않습니다."
+    />
+    <meta name="robots" content="index,follow" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E9B72'/%3E%3Cpath d='M8 21h4v3H8zm6-6h4v9h-4zm6-7h4v16h-4z' fill='%23fff'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="wrap">
+      <!-- ① 헤더 -->
+      <header class="head">
+        <h1>조기상환 계산기</h1>
+        <p class="lede">
+          대출을 중간에 갚으면 <b>실제로 얼마가 남고, 그 이득이 언제 돌아오는지</b> 계산합니다.
+          같은 금액을 넣어도 금융사가 <b>기간을 줄이는지</b> <b>월 납입액을 다시 매기는지</b>에 따라
+          결과가 크게 갈리므로, 두 방식을 나란히 보여줍니다.
+        </p>
+      </header>
+
+      <!-- ② 내 대출 -->
+      <section class="card">
+        <h2>내 대출</h2>
+        <div class="grid3">
+          <label class="field">
+            <span>남은 원금</span>
+            <input id="balance" type="text" inputmode="numeric" autocomplete="off" />
+            <em>원</em>
+          </label>
+          <label class="field">
+            <span>연 이율</span>
+            <input id="rate" type="number" inputmode="decimal" min="0" max="100" step="0.01" />
+            <em>%</em>
+          </label>
+          <label class="field">
+            <span>월 납입액</span>
+            <input id="payment" type="text" inputmode="numeric" autocomplete="off" />
+            <em>원</em>
+          </label>
+        </div>
+
+        <p class="helper">
+          월 납입액을 모르시면
+          <button type="button" class="linkish" id="deriveToggle">남은 회차로 계산</button>합니다.
+        </p>
+        <div class="derive" id="deriveBox" hidden>
+          <label class="field">
+            <span>남은 회차</span>
+            <input id="restCount" type="number" inputmode="numeric" min="1" max="720" step="1" />
+            <em>회</em>
+          </label>
+          <button type="button" class="btn" id="deriveApply">월 납입액에 넣기</button>
+          <p class="note small">
+            원리금균등 기준으로 되짚어 계산한 값입니다. 실제 청구액과 몇 원 다를 수 있습니다.
+          </p>
+        </div>
+
+        <p class="loanline" id="loanline"></p>
+        <p class="warn" id="inputmsg" hidden></p>
+
+        <details class="more">
+          <summary>자세한 설정</summary>
+          <div class="grid2">
+            <label class="field">
+              <span>다음 납입일</span>
+              <input id="nextDate" type="date" />
+            </label>
+            <label class="field">
+              <span>다음 회차 번호</span>
+              <input id="nextNo" type="number" inputmode="numeric" min="1" step="1" />
+              <em>회</em>
+            </label>
+            <label class="field">
+              <span>중도상환수수료율</span>
+              <input id="feeRate" type="number" inputmode="decimal" min="0" max="10" step="0.0001" />
+              <em>%</em>
+            </label>
+            <label class="field">
+              <span>수수료 산정방식</span>
+              <select id="feeMode">
+                <option value="flat">정률 — 상환원금 × 요율</option>
+                <option value="prorata">슬라이딩 — 남은 기간에 비례</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid2" id="prorataOnly" hidden>
+            <label class="field">
+              <span>대출개시일</span>
+              <input id="openDate" type="date" />
+            </label>
+            <label class="field">
+              <span>만기일</span>
+              <input id="maturity" type="date" />
+            </label>
+            <label class="field">
+              <span>수수료 부과기간</span>
+              <input id="feeYears" type="number" inputmode="decimal" min="0" max="10" step="0.5" />
+              <em>년</em>
+            </label>
+            <div class="fillrow">
+              <button type="button" class="btn ghost small" id="fillMaturity">
+                계산된 만기 넣기 <span class="mono" id="calcMaturity"></span>
+              </button>
+            </div>
+          </div>
+          <p class="note small">
+            수수료율과 산정방식은 대출 약정서나 금융사 앱의 상세 화면에 적혀 있습니다.
+            슬라이딩 방식은 만기가 가까울수록 수수료가 줄고, 부과기간(보통 3년)이 지나면 0이 됩니다.
+          </p>
+        </details>
+      </section>
+
+      <!-- ③ 상환 조건 + ④ 결론 — 슬라이더와 결과가 한 화면에 같이 보이도록 붙여 둡니다 -->
+      <section class="card tight">
+        <h2>얼마를, 언제 갚을까</h2>
+
+        <div class="sliderrow">
+          <div class="sliderhead">
+            <span>갚을 금액</span>
+            <input
+              id="amountNum"
+              class="numin"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              aria-label="갚을 금액"
+            />
+            <em>원</em>
+          </div>
+          <input id="amount" type="range" min="0" max="30000000" step="10000" aria-label="갚을 금액 조절" />
+          <div class="chips" id="amountChips"></div>
+        </div>
+
+        <div class="sliderrow">
+          <div class="sliderhead">
+            <span>언제 갚을까</span>
+            <b id="delayOut" class="mono"></b>
+          </div>
+          <input id="delay" type="range" min="0" max="12" step="1" value="0" aria-label="상환 시점 조절" />
+          <p class="loss" id="delayLoss" hidden></p>
+        </div>
+
+        <hr class="hair" />
+
+        <div class="verdict" id="verdictBox">
+          <p class="vline" id="verdict"></p>
+          <p class="big mono" id="netBig"></p>
+          <p class="vsub" id="ratioLine"></p>
+        </div>
+      </section>
+
+      <!-- ⑤ 방식 비교 -->
+      <section class="card" id="methodCard">
+        <h2>상환 후 무엇이 줄어드나</h2>
+        <p class="sub">
+          금융사가 남은 <b>기간</b>을 줄이는 곳도 있고, 회차는 그대로 두고 <b>월 납입액</b>을 다시
+          매기는 곳도 있습니다. 어느 쪽인지 모르시면 두 값을 모두 보시고, 신청 전에 금융사에
+          확인하시는 편이 좋습니다.
+        </p>
+        <div class="methods" role="radiogroup" aria-label="상환 방식">
+          <button type="button" class="method" id="cardTerm" role="radio" aria-checked="false">
+            <span class="mname">기간 단축</span>
+            <span class="mnet mono" id="netTerm"></span>
+            <span class="mdesc" id="descTerm"></span>
+          </button>
+          <button type="button" class="method" id="cardPay" role="radio" aria-checked="false">
+            <span class="mname">납입액 재산정</span>
+            <span class="mnet mono" id="netPay"></span>
+            <span class="mdesc" id="descPay"></span>
+          </button>
+        </div>
+        <label class="check" id="recycleWrap" hidden>
+          <input id="recycle" type="checkbox" />
+          <span>줄어든 차액을 매달 다시 원금으로 넣기 <em id="recycleHint"></em></span>
+        </label>
+      </section>
+
+      <!-- ⑥ 현금흐름 -->
+      <section class="card" id="flowCard">
+        <h2>돈이 나가고 돌아오는 모양</h2>
+        <div id="flow"></div>
+      </section>
+
+      <!-- ⑦ 회수 곡선 -->
+      <section class="card" id="curveCard">
+        <h2>본전까지 걸리는 시간</h2>
+        <div id="curve"></div>
+        <p class="cnote" id="curveNote"></p>
+      </section>
+
+      <!-- ⑧ 요약 3칸 -->
+      <section class="card">
+        <h2>요약</h2>
+        <div class="sums">
+          <div class="sum">
+            <span>앞으로 덜 내는 돈</span>
+            <b class="mono" id="sumLess"></b>
+          </div>
+          <div class="sum">
+            <span>지금 넣는 돈</span>
+            <b class="mono" id="sumInvested"></b>
+          </div>
+          <div class="sum">
+            <span>상환 후 남은 총이자</span>
+            <b class="mono" id="sumRest"></b>
+          </div>
+        </div>
+      </section>
+
+      <!-- ⑨ 접힘 3개 -->
+      <section class="card">
+        <details class="more">
+          <summary>회차별 표</summary>
+          <div id="stack"></div>
+          <div class="tablewrap" id="tableWrap"></div>
+        </details>
+        <details class="more">
+          <summary>계산 방법과 용어</summary>
+          <div class="prose">
+            <p>
+              원리금균등 상환을 전제로, 회차마다 <b>이자 = 남은 원금 × 연이율 ÷ 12</b>(원 단위 반올림)를
+              먼저 떼고 나머지를 원금에서 뺍니다. 이 과정을 잔액이 0이 될 때까지 반복해 스케줄을 만듭니다.
+            </p>
+            <p>
+              <b>순이득</b>은 이 도구의 유일한 결론 숫자입니다.
+              <span class="mono">순이득 = 앞으로 덜 내는 총액 − (갚는 원금 + 중도상환수수료)</span>
+              총이자가 얼마 줄었는지가 아니라, <b>내 주머니에 실제로 남는 금액</b>입니다.
+            </p>
+            <p>
+              <b>본전 시점</b>은 지금 넣은 돈을 매달 돌려받아 누적 손익이 0을 넘어서는 회차입니다.
+              기간 단축은 이득이 만기에 몰려 있어 본전이 늦고, 납입액 재산정은 매달 조금씩 돌아와
+              본전이 빠릅니다. 총액은 대체로 기간 단축이 큽니다.
+            </p>
+            <p>
+              <b>중도상환수수료</b>는 정률(상환원금 × 요율)과 슬라이딩(남은 기간에 비례) 두 가지를
+              지원합니다. 실제 청구액은 원 미만을 절사해 계산합니다.
+            </p>
+            <p class="note">
+              일할 이자, 원금균등·만기일시 상환, 거치기간은 아직 다루지 않습니다.
+              중도상환 신청일과 실제 처리일이 다르면 하루치 이자만큼 차이가 날 수 있습니다.
+            </p>
+          </div>
+        </details>
+        <details class="more">
+          <summary>왜 방식에 따라 결과가 달라지나</summary>
+          <div class="prose">
+            <p>
+              원금을 미리 갚으면 그 원금이 만기까지 낳았을 이자가 사라집니다. 여기까지는 같습니다.
+              갈리는 지점은 <b>남은 원금이 줄어든 뒤 무엇을 고정할 것인가</b>입니다.
+            </p>
+            <p>
+              <b>기간 단축</b>은 월 납입액을 그대로 둡니다. 매달 내는 돈은 같은데 원금이 줄었으니
+              스케줄이 앞당겨져 끝 회차가 통째로 사라집니다. 이득은 <b>만기에 몰려서</b> 옵니다.
+            </p>
+            <p>
+              <b>납입액 재산정</b>은 회차를 그대로 두고 월 납입액을 다시 계산합니다. 매달 조금씩
+              덜 내지만 <b>이자를 무는 기간은 그대로</b>라 총 이득은 작습니다. 대신 당장의 현금
+              부담이 줄고 본전이 빨리 옵니다.
+            </p>
+            <p>
+              재산정을 택하더라도 <b>줄어든 차액을 매달 다시 원금에 넣으면</b> 기간 단축과 거의 같은
+              결과가 됩니다. 다만 그 추가 상환마다 수수료가 붙을 수 있어 그만큼 이득이 줄어듭니다.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ⑩ 도구 -->
+      <section class="card tools">
+        <button type="button" class="btn" id="copyLink">이 설정 링크 복사</button>
+        <button type="button" class="btn ghost" id="reset">예시값으로 되돌리기</button>
+        <span class="toast" id="toast" hidden></span>
+      </section>
+
+      <!-- ⑪ 푸터 -->
+      <footer class="foot">
+        <p>이 도구는 금융자문이 아니며 결과는 추정치입니다. 실제 금액은 금융사에 확인하셔야 합니다.</p>
+        <p>입력값은 저장되거나 전송되지 않고 브라우저 안에서만 계산됩니다.</p>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,879 @@
+/* 숫자용 자체 호스팅 폰트. 외부 요청이 없어야 "브라우저 안에서만 계산" 이 사실이 됩니다. */
+@font-face {
+  font-family: 'Plex Mono';
+  src: url('./fonts/plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+2010-2027, U+2212;
+}
+@font-face {
+  font-family: 'Plex Mono';
+  src: url('./fonts/plex-mono-600.woff2') format('woff2');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+2010-2027, U+2212;
+}
+
+:root {
+  --paper: #ffffff;
+  --panel: #f4f6f9;
+  --panel2: #e9edf3;
+  --hair: #d5dce5;
+  --text: #0c1016;
+  --dim: #3d4753;
+  --faint: #66707e;
+  --pr: #0e9b72; /* 원금·이득 */
+  --it: #c42553; /* 이자·손실 */
+
+  /* 한글 본문은 설치된 폰트를 먼저 쓰고 시스템 스택으로 내려갑니다 */
+  --sans: 'IBM Plex Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
+  --mono: 'Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --serif: 'Gowun Batang', 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
+
+  color-scheme: light only;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--text);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 14.5px;
+  line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 금액은 절대 중간에서 끊기면 안 됩니다. "+4,837,00 / 6원" 처럼 읽히면 숫자가 아닙니다. */
+.big,
+.mnet,
+.sliderhead > b,
+.vline b,
+.vsub .mono,
+.loss .mono,
+.flowamt,
+.flowtotal b,
+.sum b,
+.loanline b,
+.cnote b {
+  white-space: nowrap;
+}
+
+.wrap {
+  background: var(--paper);
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 16px 56px;
+}
+
+.mono,
+input,
+select,
+table {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.35;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 25px;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dim);
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+}
+
+.head {
+  padding: 4px 0 18px;
+}
+
+.lede {
+  margin: 10px 0 0;
+  color: var(--dim);
+  font-size: 13.5px;
+}
+
+.lede b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  padding: 16px 14px;
+  margin-bottom: 14px;
+}
+
+.card.tight {
+  padding-bottom: 14px;
+}
+
+.sub {
+  margin: -4px 0 12px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+.sub b {
+  color: var(--dim);
+  font-weight: 600;
+}
+
+/* ── 입력 ─────────────────────────────────────────── */
+
+.grid3,
+.grid2 {
+  display: grid;
+  gap: 10px;
+}
+
+.grid3 {
+  grid-template-columns: 1fr;
+}
+
+.grid2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (min-width: 420px) {
+  .grid3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 6px;
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+
+.field > span {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  color: var(--faint);
+  font-family: var(--sans);
+}
+
+.field > em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--faint);
+  font-family: var(--sans);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 16px; /* iOS 확대 방지 */
+  font-weight: 600;
+  padding: 0;
+  outline-offset: 3px;
+}
+
+.field select {
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+.field input::-webkit-outer-spin-button,
+.field input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.helper {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+.linkish {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--pr);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.derive {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--panel2);
+  border-radius: 9px;
+  display: grid;
+  gap: 8px;
+}
+
+.loanline {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--dim);
+  padding-top: 11px;
+  border-top: 1px solid var(--hair);
+}
+
+.loanline b {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.warn {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  background: #fdeef2;
+  border: 1px solid #f3c8d5;
+  border-radius: 9px;
+  color: var(--it);
+  font-size: 12.5px;
+}
+
+.note {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.small {
+  font-size: 11.5px;
+}
+
+.more {
+  border-top: 1px solid var(--hair);
+  padding-top: 8px;
+  margin-top: 12px;
+}
+
+.card > .more:first-child {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.more summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim);
+  padding: 5px 0;
+  list-style: none;
+}
+
+.more summary::-webkit-details-marker {
+  display: none;
+}
+
+.more summary::before {
+  content: '▸ ';
+  color: var(--faint);
+}
+
+.more[open] > summary::before {
+  content: '▾ ';
+}
+
+.more[open] > summary {
+  margin-bottom: 8px;
+}
+
+.more .grid2 {
+  margin-bottom: 10px;
+}
+
+.fillrow {
+  grid-column: 1 / -1;
+}
+
+.btn.small {
+  min-height: 32px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  width: 100%;
+}
+
+/* ── 슬라이더 ─────────────────────────────────────── */
+
+.sliderrow {
+  margin-bottom: 14px;
+}
+
+.sliderhead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.sliderhead > span {
+  font-size: 12.5px;
+  color: var(--faint);
+  flex: none;
+}
+
+.sliderhead > b {
+  margin-left: auto;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.sliderhead > em {
+  font-style: normal;
+  font-size: 12.5px;
+  color: var(--faint);
+  flex: none;
+}
+
+.numin {
+  margin-left: auto;
+  width: 9.5em;
+  text-align: right;
+  border: 0;
+  border-bottom: 1px solid var(--hair);
+  background: transparent;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 0 2px 1px;
+}
+
+.numin::-webkit-outer-spin-button,
+.numin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numin {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  background: transparent;
+  margin: 0;
+  display: block;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--panel2);
+  border: 1px solid var(--hair);
+}
+
+input[type='range']::-moz-range-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--panel2);
+  border: 1px solid var(--hair);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: var(--pr);
+  border: 3px solid var(--paper);
+  box-shadow: 0 1px 4px rgba(12, 16, 22, 0.28);
+  cursor: pointer;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--pr);
+  border: 3px solid var(--paper);
+  box-shadow: 0 1px 4px rgba(12, 16, 22, 0.28);
+  cursor: pointer;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.chip {
+  border: 1px solid var(--hair);
+  background: var(--paper);
+  color: var(--dim);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  min-height: 30px;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--pr);
+  border-color: var(--pr);
+  color: #fff;
+  font-weight: 600;
+}
+
+.loss {
+  margin: 6px 0 0;
+  color: var(--it);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.loss .mono {
+  font-size: 13px;
+}
+
+.hair {
+  border: 0;
+  border-top: 1px solid var(--hair);
+  margin: 4px 0 12px;
+}
+
+/* ── 결론 ─────────────────────────────────────────── */
+
+.verdict {
+  text-align: left;
+}
+
+.vline {
+  margin: 0;
+  font-size: 14px;
+  color: var(--dim);
+}
+
+.vline b {
+  color: var(--text);
+  font-weight: 600;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.big {
+  margin: 2px 0 0;
+  font-family: var(--serif);
+  font-weight: 700;
+  /* 좁은 화면에서도 한 줄에 들어가야 합니다 */
+  font-size: clamp(25px, 8.4vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--pr);
+  font-variant-numeric: tabular-nums;
+}
+
+.big.neg {
+  color: var(--it);
+}
+
+.vsub {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+.vsub .mono {
+  color: var(--dim);
+}
+
+/* ── 방식 비교 ────────────────────────────────────── */
+
+.methods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.method {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  padding: 10px 11px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--dim);
+}
+
+.method[aria-checked='true'] {
+  border-color: var(--pr);
+  box-shadow: inset 0 0 0 1px var(--pr);
+  background: #f0faf6;
+}
+
+.mname {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.mnet {
+  /* 카드 두 장이 나란히 서야 비교가 됩니다. 좁으면 숫자가 줄어들지언정 줄바꿈은 안 됩니다 */
+  font-size: clamp(12.5px, 4.2vw, 17px);
+  font-weight: 600;
+  color: var(--pr);
+  letter-spacing: -0.02em;
+}
+
+.mnet.neg {
+  color: var(--it);
+}
+
+.mdesc {
+  font-size: 11.5px;
+  color: var(--faint);
+  line-height: 1.45;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--pr);
+  flex: none;
+}
+
+.check em {
+  font-style: normal;
+  color: var(--faint);
+  font-size: 11.5px;
+}
+
+/* ── 현금흐름 ─────────────────────────────────────── */
+
+.flowrow {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.flowrow > span {
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.flowbar {
+  height: 22px;
+  display: flex;
+  gap: 1px;
+  align-items: stretch;
+}
+
+.flowbar i {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  border-radius: 1px;
+}
+
+.flowout i {
+  background: var(--it);
+}
+
+.flowin i {
+  background: var(--pr);
+}
+
+.flowamt {
+  font-size: 12.5px;
+  margin-top: 2px;
+  color: var(--dim);
+}
+
+.flowtotal {
+  border-top: 1px solid var(--hair);
+  margin-top: 10px;
+  padding-top: 9px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+}
+
+.flowtotal b {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--pr);
+}
+
+.flowtotal b.neg {
+  color: var(--it);
+}
+
+/* ── 회수 곡선 ────────────────────────────────────── */
+
+#curve svg {
+  display: block;
+  width: 100%;
+  height: 132px;
+}
+
+.cnote {
+  margin: 7px 0 0;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+
+.cnote b {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 요약 ─────────────────────────────────────────── */
+
+.sums {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+@media (min-width: 400px) {
+  .sums {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sum {
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: 9px;
+  padding: 9px 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+}
+
+@media (min-width: 400px) {
+  .sum {
+    display: grid;
+    gap: 1px;
+  }
+}
+
+.sum span {
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.sum b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── 표 ───────────────────────────────────────────── */
+
+.tablewrap {
+  max-height: 380px;
+  overflow: auto;
+  border: 1px solid var(--hair);
+  border-radius: 9px;
+  background: var(--paper);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11.5px;
+}
+
+th,
+td {
+  padding: 5px 7px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--panel2);
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: var(--panel2);
+  color: var(--faint);
+  font-weight: 600;
+  font-family: var(--sans);
+  font-size: 11px;
+}
+
+td:first-child,
+th:first-child {
+  text-align: left;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+#stack svg {
+  display: block;
+  width: 100%;
+  height: 74px;
+  margin-bottom: 10px;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  font-size: 11.5px;
+  color: var(--faint);
+  margin: 0 0 8px;
+}
+
+.legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 4px;
+}
+
+.prose p {
+  margin: 0 0 9px;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── 도구 · 푸터 ──────────────────────────────────── */
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn {
+  border: 1px solid var(--pr);
+  background: var(--pr);
+  color: #fff;
+  border-radius: 9px;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.btn.ghost {
+  background: var(--paper);
+  color: var(--dim);
+  border-color: var(--hair);
+}
+
+.toast {
+  font-size: 12.5px;
+  color: var(--pr);
+  font-weight: 600;
+}
+
+.foot {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair);
+}
+
+.foot p {
+  margin: 0 0 5px;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.dim {
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--pr);
+  outline-offset: 2px;
+}
