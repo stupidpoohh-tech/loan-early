@@ -25,6 +25,7 @@ export function short(n: number): string {
   }
   if (n >= 10_000) {
     const man = n / 10_000;
+    if (man >= 100) return `${num(Math.round(man))}만`;
     return `${Number.isInteger(man) ? num(man) : man.toFixed(1)}만`;
   }
   return num(n);

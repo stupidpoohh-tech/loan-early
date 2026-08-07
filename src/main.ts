@@ -225,6 +225,11 @@ const ui = {
   restCount: el<HTMLInputElement>('restCount'),
   deriveApply: el<HTMLButtonElement>('deriveApply'),
   loanline: el<HTMLParagraphElement>('loanline'),
+  lede: el<HTMLParagraphElement>('lede'),
+  loanbar: el<HTMLButtonElement>('loanbar'),
+  loanbarText: el<HTMLElement>('loanbarText'),
+  loanEdit: el<HTMLDivElement>('loanEdit'),
+  loanDone: el<HTMLButtonElement>('loanDone'),
   inputmsg: el<HTMLParagraphElement>('inputmsg'),
   restored: el<HTMLParagraphElement>('restored'),
   netLabel: el<HTMLParagraphElement>('netLabel'),
@@ -432,9 +437,8 @@ function renderCurve(s: Scenario, cfg: LoanConfig): void {
     ui.curveNote.innerHTML = '<i>언제부터 이득?</i> 만기까지 본전에 못 미칩니다';
   } else {
     const d = dateOfInstallment(cfg, be);
-    const after = be - s.delayMonths;
     // 한 줄을 넘기면 그래프가 화면 밖으로 밀립니다
-    ui.curveNote.innerHTML = `<i>언제부터 이득?</i> <b>${ymKo(d)}</b>부터 · 갚고 ${months(after + 1)} 뒤`;
+    ui.curveNote.innerHTML = `<i>언제부터 이득?</i> <b>${ymKo(d)}</b>부터`;
   }
 }
 
@@ -512,8 +516,26 @@ function renderLoanLine(a: Analysis): void {
     return;
   }
   ui.loanline.innerHTML =
-    `지금 이대로 두시면 앞으로 <b>${a.count}번</b> 더 내시고 (${months(a.count)}), ` +
-    `<b>${ymKo(a.maturityDate)}</b>에 끝납니다. 그동안 낼 이자는 <b>${num(a.totalInterest)}원</b>입니다.`;
+    `<b>${a.count}번</b> 더 · <b>${ymKo(a.maturityDate)}</b>까지 · 이자 <b>${short(a.totalInterest)}원</b>`;
+}
+
+/**
+ * 대출 정보 입력은 한 번 하는 일이고 슬라이더는 계속 만지는 일입니다.
+ * 세 칸이 다 차면 한 줄로 접어 자리를 슬라이더 쪽에 넘깁니다.
+ * 타이핑 도중에 접히면 안 되므로, 사용자가 상환 조건 쪽을 건드릴 때 접습니다.
+ */
+let editing = true;
+
+function syncLoanCard(): void {
+  const canFold = analyze(state.cfg).problem === 'ok';
+  const fold = canFold && !editing;
+  ui.loanDone.hidden = !canFold || fold;
+  ui.lede.hidden = fold;
+  ui.loanbar.hidden = !fold;
+  ui.loanEdit.hidden = fold;
+  if (!fold) return;
+  ui.loanbarText.textContent =
+    `${short(state.cfg.balance)}원 · ${state.cfg.rate}% · 월 ${num(state.cfg.payment)}`;
 }
 
 /** 이 금리 아래면 예금과 비교할 실익이 생깁니다 (예금 3%대, 이자소득세 15.4% 감안) */
@@ -552,6 +574,7 @@ function render(): void {
   ui.fillMaturity.dataset['d'] = calcMaturity;
 
   syncResetButton();
+  syncLoanCard();
 
   if (a.problem !== 'ok') {
     // 아직 아무것도 넣지 않은 첫 화면에 경고를 띄울 이유는 없습니다.
@@ -651,7 +674,7 @@ function render(): void {
     // '지금'은 바로 위 시점 슬라이더가 이미 말하고 있어 되풀이하지 않습니다
     ui.verdict.innerHTML = state.delayMonths === 0 ? `${what}.` : `${when} 갚으시면 ${what}.`;
     ui.netLabel.hidden = false;
-    ui.netLabel.textContent = s.net >= 0 ? '이렇게 하면 내 손에 남는 돈' : '이렇게 하면 오히려 손해 보는 돈';
+    ui.netLabel.textContent = s.net >= 0 ? '내 손에 남는 돈' : '오히려 손해';
     const nextNet = signed(s.net);
     if (ui.netBig.textContent !== nextNet) {
       ui.netBig.textContent = nextNet;
@@ -671,6 +694,9 @@ function render(): void {
       (s.invested > 0
         ? ` 넣으신 돈의 ${Math.round((s.net / s.invested) * 100)}%가 이득으로 남는 셈입니다.`
         : '') +
+      (s.breakeven === null
+        ? ''
+        : ` 갚고 ${months(s.breakeven - s.delayMonths + 1)} 뒤부터 이득으로 돌아섭니다.`) +
       (s.clamped ? ' · 남은 금액까지만 반영했습니다.' : '');
 
     // 금리가 낮으면 "갚는 게 이득"이라는 결론이 뒤집힐 수 있습니다.
@@ -893,11 +919,23 @@ if ('IntersectionObserver' in window) {
   }
 }
 
+ui.loanbar.addEventListener('click', () => {
+  editing = true;
+  syncLoanCard();
+  ui.balance.focus();
+});
+
+ui.loanDone.addEventListener('click', () => {
+  editing = false;
+  syncLoanCard();
+});
+
 ui.stickybar.addEventListener('click', () => {
   ui.verdictBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
 restore();
+editing = analyze(state.cfg).problem !== 'ok';
 fillInputs();
 render();
 showOrigin();
