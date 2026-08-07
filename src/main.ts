@@ -138,25 +138,51 @@ function unpack(raw: string): State | null {
   }
 }
 
+/** 값을 어디서 가져왔는지 — 화면에 알려 주기 위해 기억해 둡니다 */
+type Origin = 'default' | 'link' | 'saved';
+let origin: Origin = 'default';
+
 function restore(): void {
   const hash = location.hash.replace(/^#/, '');
   const fromHash = hash ? unpack(hash) : null;
   if (fromHash) {
     state = fromHash;
+    origin = 'link';
     return;
   }
   try {
     const saved = localStorage.getItem(STORE_KEY);
     const fromStore = saved ? unpack(saved) : null;
-    if (fromStore) state = fromStore;
+    if (fromStore) {
+      state = fromStore;
+      origin = 'saved';
+      touched = true; // 이미 저장된 내 값이므로 계속 갱신합니다
+    }
   } catch {
     /* 저장소를 못 쓰는 환경이면 기본값 그대로 갑니다 */
   }
 }
 
+/**
+ * 사용자가 값을 만지기 전에는 저장하지 않습니다.
+ * 예시값을 그대로 저장해 버리면 다음 방문에 "지난번 입력값을 불러왔다"고
+ * 알리면서 정작 예시 숫자를 보여 주게 됩니다.
+ */
+let touched = false;
+
 function persist(): void {
+  if (!touched) return;
   try {
     localStorage.setItem(STORE_KEY, pack(state));
+  } catch {
+    /* 무시 */
+  }
+}
+
+function forget(): void {
+  touched = false;
+  try {
+    localStorage.removeItem(STORE_KEY);
   } catch {
     /* 무시 */
   }
@@ -180,6 +206,7 @@ const ui = {
   deriveApply: el<HTMLButtonElement>('deriveApply'),
   loanline: el<HTMLParagraphElement>('loanline'),
   inputmsg: el<HTMLParagraphElement>('inputmsg'),
+  restored: el<HTMLParagraphElement>('restored'),
   nextDate: el<HTMLInputElement>('nextDate'),
   nextNo: el<HTMLInputElement>('nextNo'),
   feeRate: el<HTMLInputElement>('feeRate'),
@@ -690,11 +717,14 @@ ui.copyLink.addEventListener('click', async () => {
 
 ui.reset.addEventListener('click', () => {
   state = defaults();
+  forget();
   history.replaceState(null, '', location.pathname + location.search);
   ui.deriveBox.hidden = true;
   ui.deriveToggle.textContent = '남은 회차로 계산';
   fillInputs();
   render();
+  origin = 'default';
+  showOrigin();
   toast('예시값으로 되돌렸습니다');
 });
 
@@ -705,9 +735,37 @@ window.addEventListener('hashchange', () => {
     state = s;
     fillInputs();
     render();
+    origin = 'link';
+    showOrigin();
   }
 });
+
+/** 값이 예시가 아닌데 아무 표시가 없으면, 어디서 온 숫자인지 알 수 없습니다. */
+function showOrigin(): void {
+  if (origin === 'default') {
+    ui.restored.hidden = true;
+    return;
+  }
+  ui.restored.hidden = false;
+  ui.restored.textContent =
+    origin === 'saved'
+      ? '지난번에 입력하신 값을 이 브라우저에서 불러왔습니다.'
+      : '링크에 담긴 값으로 열었습니다.';
+}
+
+// 한 번이라도 값을 만지면 저장을 시작하고, "불러왔습니다" 안내는 내립니다.
+for (const ev of ['input', 'change', 'click'] as const) {
+  document.addEventListener(ev, (e) => {
+    // 되돌리기는 '만진 것'이 아니라 '지운 것'이라 따로 처리합니다
+    if ((e.target as HTMLElement | null)?.closest('#reset')) return;
+    touched = true;
+    if (origin === 'default') return;
+    origin = 'default';
+    showOrigin();
+  });
+}
 
 restore();
 fillInputs();
 render();
+showOrigin();

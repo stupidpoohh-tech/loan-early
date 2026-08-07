@@ -8,7 +8,7 @@
     <title>조기상환 계산기 — 지금 갚으면 얼마나 남을까</title>
     <meta
       name="description"
-      content="대출을 중간에 갚았을 때 실제 순이득이 얼마이고 언제 돌아오는지 계산합니다. 기간 단축과 납입액 재산정을 나란히 비교합니다. 입력값은 저장되거나 전송되지 않습니다."
+      content="대출을 중간에 갚았을 때 실제 순이득이 얼마이고 언제 돌아오는지 계산합니다. 기간 단축과 납입액 재산정을 나란히 비교합니다. 입력값은 내 브라우저에만 남고 서버로 전송되지 않습니다."
     />
     <meta name="robots" content="index,follow" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E9B72'/%3E%3Cpath d='M8 21h4v3H8zm6-6h4v9h-4zm6-7h4v16h-4z' fill='%23fff'/%3E%3C/svg%3E" />
@@ -64,6 +64,7 @@
 
         <p class="loanline" id="loanline"></p>
         <p class="warn" id="inputmsg" hidden></p>
+        <p class="restored" id="restored" hidden></p>
 
         <details class="more">
           <summary>자세한 설정</summary>
@@ -282,7 +283,11 @@
       <!-- ⑪ 푸터 -->
       <footer class="foot">
         <p>이 도구는 금융자문이 아니며 결과는 추정치입니다. 실제 금액은 금융사에 확인하셔야 합니다.</p>
-        <p>입력값은 저장되거나 전송되지 않고 브라우저 안에서만 계산됩니다.</p>
+        <p>
+          계산은 브라우저 안에서만 이루어집니다. 다음에 다시 오셔도 이어서 보실 수 있도록 입력하신
+          값을 <b>이 브라우저에만</b> 저장하며, 어디로도 전송하지 않습니다. 지우시려면
+          [예시값으로 되돌리기]를 누르시거나 브라우저의 사이트 데이터를 삭제하시면 됩니다.
+        </p>
       </footer>
     </div>
 
