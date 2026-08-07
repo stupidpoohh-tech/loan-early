@@ -135,9 +135,6 @@ h2 {
   margin-bottom: 14px;
 }
 
-.card.tight {
-  padding-bottom: 14px;
-}
 
 .sub {
   margin: -4px 0 12px;
@@ -221,9 +218,9 @@ h2 {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 1px 10px;
+  gap: 1px 8px;
   width: 100%;
-  padding: 7px 12px;
+  padding: 7px 11px;
   background: var(--paper);
   border: 1px solid var(--hair);
   border-radius: 10px;

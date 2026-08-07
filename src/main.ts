@@ -535,7 +535,7 @@ function syncLoanCard(): void {
   ui.loanEdit.hidden = fold;
   if (!fold) return;
   ui.loanbarText.textContent =
-    `${short(state.cfg.balance)}원 · ${state.cfg.rate}% · 월 ${num(state.cfg.payment)}`;
+    `${short(state.cfg.balance)}원 · ${state.cfg.rate}% · 월 ${short(state.cfg.payment)}원`;
 }
 
 /** 이 금리 아래면 예금과 비교할 실익이 생깁니다 (예금 3%대, 이자소득세 15.4% 감안) */
@@ -837,6 +837,7 @@ ui.copyLink.addEventListener('click', async () => {
 ui.reset.addEventListener('click', () => {
   const clearing = !isBlank(state);
   state = clearing ? blank() : example();
+  editing = clearing; // 지운 뒤에는 다시 입력하는 중이므로, 다 채워져도 스스로 접지 않습니다
   if (clearing) forget();
   else touched = true; // 예시를 넣은 것도 사용자의 선택이라 남겨 둡니다
   history.replaceState(null, '', location.pathname + location.search);
@@ -854,6 +855,7 @@ window.addEventListener('hashchange', () => {
   const s = hash ? unpack(hash) : null;
   if (s) {
     state = s;
+    editing = false;
     fillInputs();
     render();
     origin = 'link';
@@ -900,7 +902,6 @@ function syncStickybar(): void {
 }
 
 if ('IntersectionObserver' in window) {
-  const controls = document.querySelector('.card.tight');
   new IntersectionObserver(
     ([e]) => {
       verdictSeen = !!e?.isIntersecting;
@@ -908,15 +909,13 @@ if ('IntersectionObserver' in window) {
     },
     { threshold: 0.55 },
   ).observe(ui.verdictBox);
-  if (controls) {
-    new IntersectionObserver(
-      ([e]) => {
-        controlsSeen = !!e?.isIntersecting;
-        syncStickybar();
-      },
-      { threshold: 0 },
-    ).observe(controls);
-  }
+  new IntersectionObserver(
+    ([e]) => {
+      controlsSeen = !!e?.isIntersecting;
+      syncStickybar();
+    },
+    { threshold: 0 },
+  ).observe(ui.amount);
 }
 
 ui.loanbar.addEventListener('click', () => {
