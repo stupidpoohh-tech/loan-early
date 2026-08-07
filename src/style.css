@@ -215,6 +215,85 @@ h2 {
   color: var(--text);
 }
 
+/* ── 화면 아래 따라다니는 요약 ────────────────────── */
+
+.stickybar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  z-index: 40;
+  width: min(600px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px calc(13px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: saturate(1.6) blur(8px);
+  border: 0;
+  border-top: 1px solid var(--hair);
+  box-shadow: 0 -6px 22px rgba(12, 16, 22, 0.11);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: sbup 0.18s ease-out;
+}
+
+@keyframes sbup {
+  from {
+    transform: translateX(-50%) translateY(100%);
+  }
+}
+
+.sbleft {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sbleft b {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.sbleft em {
+  font-style: normal;
+  font-size: 13.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.sbnet {
+  margin-left: auto;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--pr);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+.sbnet.neg {
+  color: var(--it);
+}
+
+.sbgo {
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--faint);
+  border-left: 1px solid var(--hair);
+  padding-left: 10px;
+}
+
+@media (max-width: 359px) {
+  .sbgo {
+    display: none;
+  }
+}
+
 .ratewarn {
   margin: 12px 0 0;
   padding: 11px 13px;
@@ -224,6 +303,21 @@ h2 {
   font-size: 14.5px;
   line-height: 1.6;
   color: #7a5b12;
+}
+
+/* 컨트롤 바로 아래 붙은 '답' 패널 — 구분선보다 한 덩어리로 읽힙니다 */
+.verdict {
+  margin-top: 14px;
+  padding: 16px 15px 15px;
+  background: #f2faf7;
+  border: 1px solid #cbe9dc;
+  border-radius: 12px;
+}
+
+.verdict.dim {
+  background: var(--panel);
+  border-color: var(--hair);
+  opacity: 1;
 }
 
 .vlabel {
@@ -426,7 +520,7 @@ h2 {
 /* ── 슬라이더 ─────────────────────────────────────── */
 
 .sliderrow {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .sliderhead {
@@ -528,8 +622,8 @@ input[type='range']::-moz-range-thumb {
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 7px;
+  margin-top: 8px;
 }
 
 .chip {
@@ -598,6 +692,30 @@ input[type='range']::-moz-range-thumb {
   letter-spacing: -0.02em;
   color: var(--pr);
   font-variant-numeric: tabular-nums;
+}
+
+@keyframes bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.045);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.big.bump {
+  animation: bump 0.22s ease-out;
+  transform-origin: left center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .big.bump,
+  .stickybar {
+    animation: none;
+  }
 }
 
 .big.neg {

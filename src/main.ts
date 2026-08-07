@@ -229,6 +229,10 @@ const ui = {
   restored: el<HTMLParagraphElement>('restored'),
   netLabel: el<HTMLParagraphElement>('netLabel'),
   ratewarn: el<HTMLParagraphElement>('ratewarn'),
+  stickybar: el<HTMLButtonElement>('stickybar'),
+  sbAmt: el<HTMLElement>('sbAmt'),
+  sbWhen: el<HTMLElement>('sbWhen'),
+  sbNet: el<HTMLElement>('sbNet'),
   nextDate: el<HTMLInputElement>('nextDate'),
   nextNo: el<HTMLInputElement>('nextNo'),
   feeRate: el<HTMLInputElement>('feeRate'),
@@ -245,6 +249,7 @@ const ui = {
   delay: el<HTMLInputElement>('delay'),
   delayOut: el<HTMLElement>('delayOut'),
   delayLoss: el<HTMLParagraphElement>('delayLoss'),
+  verdictBox: el<HTMLDivElement>('verdictBox'),
   verdict: el<HTMLParagraphElement>('verdict'),
   netBig: el<HTMLParagraphElement>('netBig'),
   ratioLine: el<HTMLParagraphElement>('ratioLine'),
@@ -629,6 +634,7 @@ function render(): void {
     ui.netBig.textContent = '';
     ui.ratioLine.textContent = '';
     ui.ratewarn.hidden = true;
+    ui.stickybar.hidden = true;
   } else {
     const when = state.delayMonths === 0 ? '지금' : `${state.delayMonths}개월 뒤에`;
     const what =
@@ -644,7 +650,13 @@ function render(): void {
     ui.verdict.innerHTML = `<b>${num(s.amount)}원</b>을 ${when} 갚으면 ${what}.`;
     ui.netLabel.hidden = false;
     ui.netLabel.textContent = s.net >= 0 ? '이렇게 하면 내 손에 남는 돈' : '이렇게 하면 오히려 손해 보는 돈';
-    ui.netBig.textContent = signed(s.net);
+    const nextNet = signed(s.net);
+    if (ui.netBig.textContent !== nextNet) {
+      ui.netBig.textContent = nextNet;
+      ui.netBig.classList.remove('bump');
+      void ui.netBig.offsetWidth; // 애니메이션을 다시 태우려면 리플로우가 필요합니다
+      ui.netBig.classList.add('bump');
+    }
     ui.netBig.classList.toggle('neg', s.net < 0);
     // "1.81배" 같은 비율만 두면 무엇 대비인지 알 수 없습니다. 들어가는 돈과
     // 안 내게 되는 돈을 문장으로 풀어 씁니다.
@@ -661,6 +673,11 @@ function render(): void {
 
     // 금리가 낮으면 "갚는 게 이득"이라는 결론이 뒤집힐 수 있습니다.
     // 이 도구는 예금에 뒀을 때의 이자를 계산에 넣지 않으므로 그때만 알립니다.
+    ui.sbAmt.textContent = `${num(s.amount)}원`;
+    ui.sbWhen.textContent = state.delayMonths === 0 ? '지금 갚으면' : `${state.delayMonths}개월 뒤 갚으면`;
+    ui.sbNet.textContent = signed(s.net);
+    ui.sbNet.classList.toggle('neg', s.net < 0);
+
     ui.ratewarn.hidden = cfg.rate > LOW_RATE || s.net <= 0;
     ui.ratewarn.innerHTML =
       `이 대출은 금리가 <b>${cfg.rate}%</b>로 낮은 편입니다. 갚지 않고 그 돈을 예금에 두면 ` +
@@ -840,6 +857,43 @@ for (const ev of ['input', 'change', 'click'] as const) {
     showOrigin();
   });
 }
+
+/**
+ * 슬라이더를 만지는 동안 결과가 화면 밖에 있으면 조작과 반응이 끊깁니다.
+ * 조작부는 보이는데 결과는 안 보이는 순간에만 아래에 요약을 띄웁니다.
+ */
+let controlsSeen = false;
+let verdictSeen = true;
+
+function syncStickybar(): void {
+  const show = controlsSeen && !verdictSeen && !!ui.netBig.textContent;
+  if (ui.stickybar.hidden === !show) return;
+  ui.stickybar.hidden = !show;
+}
+
+if ('IntersectionObserver' in window) {
+  const controls = document.querySelector('.card.tight');
+  new IntersectionObserver(
+    ([e]) => {
+      verdictSeen = !!e?.isIntersecting;
+      syncStickybar();
+    },
+    { threshold: 0.55 },
+  ).observe(ui.verdictBox);
+  if (controls) {
+    new IntersectionObserver(
+      ([e]) => {
+        controlsSeen = !!e?.isIntersecting;
+        syncStickybar();
+      },
+      { threshold: 0 },
+    ).observe(controls);
+  }
+}
+
+ui.stickybar.addEventListener('click', () => {
+  ui.verdictBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
 
 restore();
 fillInputs();

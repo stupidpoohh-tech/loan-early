@@ -176,8 +176,6 @@
           <p class="loss" id="delayLoss" hidden></p>
         </div>
 
-        <hr class="hair" />
-
         <div class="verdict" id="verdictBox">
           <p class="vline" id="verdict"></p>
           <p class="vlabel" id="netLabel" hidden></p>
@@ -331,6 +329,14 @@
         </p>
       </footer>
     </div>
+
+    <!-- 슬라이더를 만지는 동안 결과가 화면 밖에 있으면 조작과 반응이 끊깁니다.
+         결과가 안 보일 때만 아래에 붙어 따라다닙니다. -->
+    <button type="button" class="stickybar" id="stickybar" hidden aria-hidden="true" tabindex="-1">
+      <span class="sbleft"><b id="sbAmt"></b><em id="sbWhen"></em></span>
+      <span class="sbnet mono" id="sbNet"></span>
+      <span class="sbgo">결과 보기 ↓</span>
+    </button>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
