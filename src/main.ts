@@ -228,6 +228,7 @@ const ui = {
   inputmsg: el<HTMLParagraphElement>('inputmsg'),
   restored: el<HTMLParagraphElement>('restored'),
   netLabel: el<HTMLParagraphElement>('netLabel'),
+  ratewarn: el<HTMLParagraphElement>('ratewarn'),
   nextDate: el<HTMLInputElement>('nextDate'),
   nextNo: el<HTMLInputElement>('nextNo'),
   feeRate: el<HTMLInputElement>('feeRate'),
@@ -510,6 +511,9 @@ function renderLoanLine(a: Analysis): void {
     `<b>${ymKo(a.maturityDate)}</b>에 끝납니다. 그동안 낼 이자는 <b>${num(a.totalInterest)}원</b>입니다.`;
 }
 
+/** 이 금리 아래면 예금과 비교할 실익이 생깁니다 (예금 3%대, 이자소득세 15.4% 감안) */
+const LOW_RATE = 5;
+
 /** 문장 안에 들어가는 날짜 — "2031.11" 보다 "2031년 11월" 이 읽힙니다 */
 function ymKo(d: Date): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
@@ -624,6 +628,7 @@ function render(): void {
     ui.netLabel.hidden = true;
     ui.netBig.textContent = '';
     ui.ratioLine.textContent = '';
+    ui.ratewarn.hidden = true;
   } else {
     const when = state.delayMonths === 0 ? '지금' : `${state.delayMonths}개월 뒤에`;
     const what =
@@ -653,6 +658,14 @@ function render(): void {
         ? ` 넣으신 돈의 ${Math.round((s.net / s.invested) * 100)}%가 이득으로 남는 셈입니다.`
         : '') +
       (s.clamped ? ' · 남은 금액까지만 반영했습니다.' : '');
+
+    // 금리가 낮으면 "갚는 게 이득"이라는 결론이 뒤집힐 수 있습니다.
+    // 이 도구는 예금에 뒀을 때의 이자를 계산에 넣지 않으므로 그때만 알립니다.
+    ui.ratewarn.hidden = cfg.rate > LOW_RATE || s.net <= 0;
+    ui.ratewarn.innerHTML =
+      `이 대출은 금리가 <b>${cfg.rate}%</b>로 낮은 편입니다. 갚지 않고 그 돈을 예금에 두면 ` +
+      `이자가 붙으므로, <b>예금 금리와 비교해 보신 뒤</b> 정하시는 편이 좋습니다. ` +
+      `예금 이자에는 15.4%의 세금이 붙는다는 점도 함께 보세요.`;
   }
 
   if (!off) {
