@@ -23,7 +23,9 @@ const cfg: LoanConfig = {
   nextNo: 1,
   feeRate: 0.9855,
   feeMode: 'flat',
-  openDate: '2024-01-25',
+  // 개시일+3년(면제)이 픽스처의 상환일 범위(최대 2027-08-25) 밖에 있어야
+  // 명세 픽스처가 뜻하는 "수수료가 붙는 상황" 이 유지됩니다.
+  openDate: '2025-09-25',
   maturity: '2033-07-25',
   feeYears: 3,
 };
@@ -164,7 +166,8 @@ describe('추가 성질', () => {
     expect(term.net).toBeGreaterThan(pay.net);
   });
 
-  it('지연이 커질수록 net 이 단조 감소한다', () => {
+  it('지연이 커질수록 net 이 단조 감소한다 — 부과기간 안에서', () => {
+    // 수수료가 일정한 구간의 성질입니다. 면제를 넘는 순간은 위 '미뤄 갚는 쪽이 이득' 이 다룹니다.
     for (const method of ['pay', 'term'] as const) {
       let prev = Infinity;
       for (let m = 0; m <= 12; m++) {
@@ -271,11 +274,34 @@ describe('날짜', () => {
 });
 
 describe('수수료', () => {
-  const pro: LoanConfig = { ...cfg, feeMode: 'prorata', feeRate: 1.2, feeYears: 3 };
+  // 면제 시점(2027-01-25)이 시험 날짜들과 맞물리도록 개시일을 고정합니다
+  const pro: LoanConfig = { ...cfg, feeMode: 'prorata', feeRate: 1.2, feeYears: 3, openDate: '2024-01-25' };
 
-  it('flat 은 상환일과 무관하게 같다', () => {
+  it('flat 은 부과기간 안에서는 상환일과 무관하게 같다', () => {
     expect(feeRateAt(parseDate('2026-01-01'), cfg)).toBeCloseTo(0.009855, 12);
-    expect(feeRateAt(parseDate('2030-01-01'), cfg)).toBeCloseTo(0.009855, 12);
+    expect(feeRateAt(parseDate('2028-01-01'), cfg)).toBeCloseTo(0.009855, 12);
+  });
+
+  it('부과기간이 지나면 flat 도 면제된다 — 딱 3년 되는 날부터', () => {
+    // 개시일 2025-09-25 + 3년 = 2028-09-25
+    expect(feeRateAt(parseDate('2028-09-24'), cfg)).toBeCloseTo(0.009855, 12);
+    expect(feeRateAt(parseDate('2028-09-25'), cfg)).toBe(0);
+  });
+
+  it('부과기간이 0이면 flat 도 무기한', () => {
+    expect(feeRateAt(parseDate('2035-01-01'), { ...cfg, feeYears: 0 })).toBeCloseTo(0.009855, 12);
+  });
+
+  it('면제가 코앞인 저금리 대출은 미뤄 갚는 쪽이 이득', () => {
+    // 금리가 낮으면 몇 달치 이자 손해 < 수수료 절약 이 성립합니다.
+    // 이 역전이 '언제 갚을까' 축이 존재하는 이유입니다.
+    const low: LoanConfig = { ...cfg, rate: 3.5, feeRate: 1.4, openDate: '2023-11-25' }; // 면제 2026-11-25
+    const b = buildSchedule(low.balance, low.payment, monthlyRate(low.rate));
+    const now = simulate(low, b, 10_000_000, 0, 'term', false, { today });
+    const wait = simulate(low, b, 10_000_000, 3, 'term', false, { today }); // 상환일 2026-11-25
+    expect(now.fee).toBe(140_000);
+    expect(wait.fee).toBe(0);
+    expect(wait.net).toBeGreaterThan(now.net);
   });
 
   it('prorata 는 만기가 가까울수록 낮아진다', () => {

@@ -30,7 +30,7 @@ export interface LoanConfig {
   /** 중도상환수수료율 (%, 예: 1.0) */
   feeRate: number;
   feeMode: FeeMode;
-  /** 대출개시일 — prorata 일 때만 사용 */
+  /** 대출개시일 — 부과기간 면제 판정에 항상 쓰입니다 */
   openDate: string;
   /** 만기일 — prorata 일 때만 사용 */
   maturity: string;
@@ -183,19 +183,26 @@ export function dateOfInstallment(cfg: LoanConfig, k: number): Date {
   return addMonths(parseDate(cfg.nextDate), k);
 }
 
-/** 상환일 기준 실제 수수료율 (소수 비율, 예: 0.009855) */
+/**
+ * 상환일 기준 실제 수수료율 (소수 비율, 예: 0.009855).
+ *
+ * 부과기간(보통 3년)이 지나면 산정방식과 무관하게 면제됩니다. 원 명세는 정률(flat)을
+ * 무기한 부과로 뒀지만, 국내 가계대출은 약관상 대부분 3년 뒤 면제라 명세 쪽이 틀립니다.
+ * 이 면제가 "언제 갚을까" 축의 유일한 반전 요소입니다 — 이게 없으면 미루기는 늘 손해라
+ * 시점 선택이 의미가 없습니다. 무기한 부과 대출은 부과기간을 0으로 두면 됩니다.
+ */
 export function feeRateAt(repayDate: Date, cfg: LoanConfig): number {
   const flat = cfg.feeRate / 100;
+  const open = parseDate(cfg.openDate);
+
+  if (cfg.feeYears > 0 && repayDate.getTime() >= addMonths(open, Math.round(cfg.feeYears * 12)).getTime()) {
+    return 0; // 부과기간 경과 — 방식과 무관
+  }
   if (cfg.feeMode === 'flat') return flat;
 
-  const open = parseDate(cfg.openDate);
   const maturity = parseDate(cfg.maturity);
   const total = daysBetween(open, maturity);
   if (total <= 0) return flat;
-
-  if (cfg.feeYears > 0 && repayDate.getTime() >= addMonths(open, Math.round(cfg.feeYears * 12)).getTime()) {
-    return 0; // 부과기간 경과
-  }
   return (flat * Math.max(0, daysBetween(repayDate, maturity))) / total;
 }
 

@@ -129,6 +129,10 @@
           </div>
           <input id="delay" type="range" min="0" max="12" step="1" value="0" aria-label="상환 시점 조절" />
           <p class="loss" id="delayLoss" hidden></p>
+          <p class="gain" id="waitHint" hidden>
+            <span id="waitText"></span>
+            <button type="button" class="linkish" id="waitApply">그때로 바꿔보기</button>
+          </p>
         </div>
 
         <div class="verdict" id="verdictBox">
@@ -174,6 +178,28 @@
           <input id="recycle" type="checkbox" />
           <span>줄어든 만큼 매달 계속 더 갚기 <em id="recycleHint"></em></span>
         </label>
+      </section>
+
+      <!-- 계산이 끝난 사람의 다음 문장 — 은행에 그대로 읽으면 됩니다 -->
+      <section class="card" id="actionCard">
+        <h2>은행에는 이렇게 말하면 됩니다</h2>
+        <ol class="say">
+          <li>
+            “대출 <b>중도상환</b>(일부만 갚기) 신청하려고요. <b id="sayAmount"></b> 갚을게요.”
+          </li>
+          <li>
+            “갚고 나면 <b>기간이 줄어드나요, 월 납입금이 줄어드나요?</b>”
+            <span class="saynote" id="sayCompare"></span>
+          </li>
+          <li>
+            “<b>중도상환수수료</b>는 얼마인가요?”
+            <span class="saynote" id="sayFee"></span>
+          </li>
+        </ol>
+        <p class="note small">
+          은행 앱에서는 대출 상세 화면의 <b>중도상환</b>(또는 원금상환) 메뉴에서 같은 일을 할 수
+          있습니다. 전화로는 고객센터에 위 문장을 그대로 말씀하시면 됩니다.
+        </p>
       </section>
 
       <!-- ⑥ 현금흐름 -->
@@ -227,20 +253,20 @@
                 <option value="prorata">슬라이딩 — 남은 기간에 비례</option>
               </select>
             </label>
-          </div>
-          <div class="grid2" id="prorataOnly" hidden>
             <label class="field">
               <span>대출 시작한 날</span>
               <input id="openDate" type="date" />
             </label>
             <label class="field">
-              <span>대출 끝나는 날</span>
-              <input id="maturity" type="date" />
-            </label>
-            <label class="field">
               <span>수수료 내는 기간 <i>부과기간</i></span>
               <input id="feeYears" type="number" inputmode="decimal" min="0" max="10" step="0.5" />
               <em>년</em>
+            </label>
+          </div>
+          <div class="grid2" id="prorataOnly" hidden>
+            <label class="field">
+              <span>대출 끝나는 날</span>
+              <input id="maturity" type="date" />
             </label>
             <div class="fillrow">
               <button type="button" class="btn ghost small" id="fillMaturity">
@@ -250,7 +276,8 @@
           </div>
           <p class="note small">
             수수료율과 산정방식은 대출 약정서나 금융사 앱의 상세 화면에 적혀 있습니다.
-            슬라이딩 방식은 만기가 가까울수록 수수료가 줄고, 부과기간(보통 3년)이 지나면 0이 됩니다.
+            대부분의 대출은 <b>받은 날로부터 3년이 지나면 수수료가 없어집니다</b> — 그래서
+            대출 시작한 날을 맞게 넣을수록 "언제 갚을까"의 답이 정확해집니다.
           </p>
         </details>
         <details class="more">

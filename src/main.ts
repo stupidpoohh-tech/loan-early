@@ -2,6 +2,7 @@ import './style.css';
 import {
   analyze,
   dateOfInstallment,
+  feeRateAt,
   fitPayment,
   monthlyRate,
   parseDate,
@@ -254,6 +255,13 @@ const ui = {
   delay: el<HTMLInputElement>('delay'),
   delayOut: el<HTMLElement>('delayOut'),
   delayLoss: el<HTMLParagraphElement>('delayLoss'),
+  waitHint: el<HTMLParagraphElement>('waitHint'),
+  waitText: el<HTMLElement>('waitText'),
+  waitApply: el<HTMLButtonElement>('waitApply'),
+  actionCard: el<HTMLElement>('actionCard'),
+  sayAmount: el<HTMLElement>('sayAmount'),
+  sayCompare: el<HTMLElement>('sayCompare'),
+  sayFee: el<HTMLElement>('sayFee'),
   verdictBox: el<HTMLDivElement>('verdictBox'),
   verdict: el<HTMLParagraphElement>('verdict'),
   netBig: el<HTMLParagraphElement>('netBig'),
@@ -507,7 +515,7 @@ function clearResults(message: string): void {
   ui.sumRest.textContent = '—';
   ui.tableWrap.innerHTML = '';
   ui.stack.innerHTML = '';
-  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, true);
+  for (const node of [ui.methodCard, ui.flowCard, ui.actionCard]) setDim(node, true);
 }
 
 function renderLoanLine(a: Analysis): void {
@@ -525,6 +533,9 @@ function renderLoanLine(a: Analysis): void {
  * 타이핑 도중에 접히면 안 되므로, 사용자가 상환 조건 쪽을 건드릴 때 접습니다.
  */
 let editing = true;
+
+/** 렌더에서 계산한 최적 지연 — '그때로 바꿔보기' 버튼이 씁니다 */
+let suggestedDelay = 0;
 
 function syncLoanCard(): void {
   const canFold = analyze(state.cfg).problem === 'ok';
@@ -624,7 +635,7 @@ function render(): void {
   const s = state.method === 'term' ? term : pay;
 
   const off = state.amount <= 0;
-  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, off);
+  for (const node of [ui.methodCard, ui.flowCard, ui.actionCard]) setDim(node, off);
 
   // ⑤ 방식 비교
   ui.netTerm.textContent = signed(term.net);
@@ -643,11 +654,46 @@ function render(): void {
   // ③ 지연 손해
   if (state.delayMonths > 0 && state.amount > 0) {
     const nowS = simulate(cfg, a.base, state.amount, 0, state.method, state.recycle);
-    const lost = nowS.net - s.net;
+    const diff = s.net - nowS.net;
     ui.delayLoss.hidden = false;
-    ui.delayLoss.innerHTML = `지금 갚을 때보다 <span class="mono">${num(Math.max(0, lost))}원</span> 덜 남습니다`;
+    ui.delayLoss.innerHTML =
+      diff > 0
+        ? `지금 갚을 때보다 <span class="mono">${num(diff)}원</span> 더 남습니다 — 수수료가 줄어든 덕입니다`
+        : diff < 0
+          ? `지금 갚을 때보다 <span class="mono">${num(-diff)}원</span> 덜 남습니다`
+          : '지금 갚을 때와 차이가 없습니다';
   } else {
     ui.delayLoss.hidden = true;
+  }
+
+  // '언제' 축의 정답 — 미뤄서 나아지는 유일한 힘은 수수료 면제입니다.
+  // 금리가 낮고 면제가 코앞이면 몇 달 기다리는 쪽이 이기므로, 그때만 먼저 알려 줍니다.
+  suggestedDelay = 0;
+  if (state.amount > 0) {
+    let bestNet = -Infinity;
+    for (let m2 = 0; m2 <= maxDelay; m2++) {
+      const n2 =
+        m2 === state.delayMonths
+          ? s.net
+          : simulate(cfg, a.base, state.amount, m2, state.method, state.recycle).net;
+      if (n2 > bestNet) {
+        bestNet = n2;
+        suggestedDelay = m2;
+      }
+    }
+    const gain = bestNet - s.net;
+    if (suggestedDelay > state.delayMonths && gain >= 10_000) {
+      const dd = dateOfInstallment(cfg, suggestedDelay - 1);
+      const feeThen = feeRateAt(dd, cfg);
+      ui.waitHint.hidden = false;
+      ui.waitText.innerHTML =
+        `<b>${suggestedDelay}개월 뒤(${ymKo(dd)})</b>부터는 중도상환수수료가 ` +
+        `${feeThen === 0 ? '없습니다' : '크게 줄어듭니다'}. 그때 갚으면 <b>${num(gain)}원</b> 더 남습니다.`;
+    } else {
+      ui.waitHint.hidden = true;
+    }
+  } else {
+    ui.waitHint.hidden = true;
   }
 
   // ④ 결론
@@ -698,6 +744,13 @@ function render(): void {
         ? ''
         : ` 갚고 ${months(s.breakeven - s.delayMonths + 1)} 뒤부터 이득으로 돌아섭니다.`) +
       (s.clamped ? ' · 남은 금액까지만 반영했습니다.' : '');
+
+    ui.sayAmount.textContent = `${num(s.amount)}원`;
+    ui.sayCompare.innerHTML =
+      `→ 기간이 줄면 <b>${signed(term.net)}</b>, 월 납입금이 줄면 <b>${signed(pay.net)}</b>. ` +
+      `답을 듣고 위 비교에서 맞는 쪽을 누르세요.`;
+    ui.sayFee.innerHTML =
+      `→ 이 계산으로는 약 <b>${num(s.fee)}원</b>입니다. 많이 다르면 아래 수수료 설정을 고쳐 다시 보세요.`;
 
     // 금리가 낮으면 "갚는 게 이득"이라는 결론이 뒤집힐 수 있습니다.
     // 이 도구는 예금에 뒀을 때의 이자를 계산에 넣지 않으므로 그때만 알립니다.
@@ -922,6 +975,13 @@ ui.loanbar.addEventListener('click', () => {
   editing = true;
   syncLoanCard();
   ui.balance.focus();
+});
+
+ui.waitApply.addEventListener('click', () => {
+  state.delayMonths = suggestedDelay;
+  touched = true;
+  render();
+  persist();
 });
 
 ui.loanDone.addEventListener('click', () => {
