@@ -54,8 +54,8 @@ html {
 
 body {
   font-family: var(--sans);
-  font-size: 14.5px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
@@ -100,12 +100,12 @@ h2 {
 h1 {
   font-family: var(--serif);
   font-weight: 700;
-  font-size: 25px;
+  font-size: 27px;
   letter-spacing: -0.01em;
 }
 
 h2 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--dim);
   letter-spacing: 0.02em;
@@ -119,7 +119,7 @@ h2 {
 .lede {
   margin: 10px 0 0;
   color: var(--dim);
-  font-size: 13.5px;
+  font-size: 15.5px;
 }
 
 .lede b {
@@ -141,7 +141,7 @@ h2 {
 
 .sub {
   margin: -4px 0 12px;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--faint);
 }
 
@@ -180,19 +180,67 @@ h2 {
   background: var(--paper);
   border: 1px solid var(--hair);
   border-radius: 9px;
-  padding: 7px 10px;
+  padding: 11px 13px;
+  min-height: 62px;
 }
 
 .field > span {
   grid-column: 1 / -1;
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--faint);
   font-family: var(--sans);
 }
 
+/* 정식 용어는 남겨 둡니다 — 은행 앱·약정서와 말이 맞아야 찾을 수 있습니다 */
+.field > span i {
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 500;
+  color: #7c8797;
+  margin-left: 5px;
+}
+
+.wheretofind {
+  margin: 12px 0 0;
+  padding: 13px 15px;
+  background: #f2f7fd;
+  border: 1px solid #cfe0f5;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--dim);
+}
+
+.wheretofind b {
+  color: var(--text);
+}
+
+.vlabel {
+  margin: 12px 0 2px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dim);
+}
+
+.mterm {
+  font-size: 14px;
+  color: #7c8797;
+  font-weight: 500;
+}
+
+/* 은행에서 쓰는 말은 괄호로 묶어 둡니다 — 쉬운 말과 한 덩어리로 읽히면 안 됩니다 */
+.field > span i::before,
+.mterm::before {
+  content: '(';
+}
+.field > span i::after,
+.mterm::after {
+  content: ')';
+}
+
 .field > em {
   font-style: normal;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--faint);
   font-family: var(--sans);
 }
@@ -204,15 +252,26 @@ h2 {
   border: 0;
   background: transparent;
   color: var(--text);
-  font-size: 16px; /* iOS 확대 방지 */
+  font-size: 18.5px; /* iOS 확대 방지 */
   font-weight: 600;
   padding: 0;
+  min-height: 34px;
+  line-height: 34px;
+}
+
+/* 예시 문구가 굵고 진하면 이미 입력된 값으로 읽힙니다 */
+.field input::placeholder,
+.numin::placeholder {
+  color: #b3bcc8;
+  font-weight: 400;
+  font-family: var(--sans);
+  font-size: 16px;
   outline-offset: 3px;
 }
 
 .field select {
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 16.5px;
 }
 
 .field input::-webkit-outer-spin-button,
@@ -228,7 +287,7 @@ h2 {
 
 .helper {
   margin: 10px 0 0;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--faint);
 }
 
@@ -255,7 +314,7 @@ h2 {
 
 .loanline {
   margin: 12px 0 0;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--dim);
   padding-top: 11px;
   border-top: 1px solid var(--hair);
@@ -274,7 +333,7 @@ h2 {
   border: 1px solid #f3c8d5;
   border-radius: 9px;
   color: var(--it);
-  font-size: 12.5px;
+  font-size: 14.5px;
 }
 
 .restored {
@@ -284,16 +343,16 @@ h2 {
   border: 1px solid #bfe3d5;
   border-radius: 9px;
   color: #0a7a5a;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .note {
   color: var(--faint);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .small {
-  font-size: 11.5px;
+  font-size: 14px;
 }
 
 .more {
@@ -310,10 +369,13 @@ h2 {
 
 .more summary {
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--dim);
-  padding: 5px 0;
+  padding: 13px 0;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
   list-style: none;
 }
 
@@ -345,7 +407,7 @@ h2 {
 .btn.small {
   min-height: 32px;
   padding: 6px 11px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   width: 100%;
 }
@@ -364,20 +426,20 @@ h2 {
 }
 
 .sliderhead > span {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--faint);
   flex: none;
 }
 
 .sliderhead > b {
   margin-left: auto;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 600;
 }
 
 .sliderhead > em {
   font-style: normal;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--faint);
   flex: none;
 }
@@ -390,7 +452,7 @@ h2 {
   border-bottom: 1px solid var(--hair);
   background: transparent;
   color: var(--text);
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 600;
   padding: 0 2px 1px;
 }
@@ -410,31 +472,31 @@ input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 28px;
+  height: 44px;
   background: transparent;
   margin: 0;
   display: block;
 }
 
 input[type='range']::-webkit-slider-runnable-track {
-  height: 5px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 4px;
   background: var(--panel2);
   border: 1px solid var(--hair);
 }
 
 input[type='range']::-moz-range-track {
-  height: 5px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 4px;
   background: var(--panel2);
   border: 1px solid var(--hair);
 }
 
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 24px;
-  height: 24px;
-  margin-top: -10px;
+  width: 34px;
+  height: 34px;
+  margin-top: -14px;
   border-radius: 50%;
   background: var(--pr);
   border: 3px solid var(--paper);
@@ -443,8 +505,8 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 input[type='range']::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--pr);
   border: 3px solid var(--paper);
@@ -455,8 +517,8 @@ input[type='range']::-moz-range-thumb {
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .chip {
@@ -464,12 +526,12 @@ input[type='range']::-moz-range-thumb {
   background: var(--paper);
   color: var(--dim);
   border-radius: 999px;
-  padding: 5px 11px;
-  font-size: 12.5px;
+  padding: 10px 16px;
+  font-size: 15.5px;
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  min-height: 30px;
+  min-height: 48px;
 }
 
 .chip[aria-pressed='true'] {
@@ -482,12 +544,12 @@ input[type='range']::-moz-range-thumb {
 .loss {
   margin: 6px 0 0;
   color: var(--it);
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 600;
 }
 
 .loss .mono {
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .hair {
@@ -504,7 +566,7 @@ input[type='range']::-moz-range-thumb {
 
 .vline {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--dim);
 }
 
@@ -520,7 +582,7 @@ input[type='range']::-moz-range-thumb {
   font-family: var(--serif);
   font-weight: 700;
   /* 좁은 화면에서도 한 줄에 들어가야 합니다 */
-  font-size: clamp(25px, 8.4vw, 34px);
+  font-size: clamp(28px, 9vw, 38px);
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--pr);
@@ -533,7 +595,7 @@ input[type='range']::-moz-range-thumb {
 
 .vsub {
   margin: 3px 0 0;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--faint);
 }
 
@@ -556,7 +618,8 @@ input[type='range']::-moz-range-thumb {
   background: var(--paper);
   border: 1px solid var(--hair);
   border-radius: 10px;
-  padding: 10px 11px;
+  padding: 14px 13px;
+  min-height: 92px;
   cursor: pointer;
   font: inherit;
   color: var(--dim);
@@ -569,13 +632,13 @@ input[type='range']::-moz-range-thumb {
 }
 
 .mname {
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 600;
 }
 
 .mnet {
   /* 카드 두 장이 나란히 서야 비교가 됩니다. 좁으면 숫자가 줄어들지언정 줄바꿈은 안 됩니다 */
-  font-size: clamp(12.5px, 4.2vw, 17px);
+  font-size: clamp(15px, 4.6vw, 19px);
   font-weight: 600;
   color: var(--pr);
   letter-spacing: -0.02em;
@@ -586,7 +649,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .mdesc {
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--faint);
   line-height: 1.45;
 }
@@ -596,15 +659,15 @@ input[type='range']::-moz-range-thumb {
   align-items: flex-start;
   gap: 8px;
   margin-top: 10px;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--dim);
   cursor: pointer;
 }
 
 .check input {
-  width: 18px;
-  height: 18px;
-  margin: 2px 0 0;
+  width: 24px;
+  height: 24px;
+  margin: 1px 0 0;
   accent-color: var(--pr);
   flex: none;
 }
@@ -612,21 +675,21 @@ input[type='range']::-moz-range-thumb {
 .check em {
   font-style: normal;
   color: var(--faint);
-  font-size: 11.5px;
+  font-size: 14px;
 }
 
 /* ── 현금흐름 ─────────────────────────────────────── */
 
 .flowrow {
   display: grid;
-  grid-template-columns: 38px 1fr;
+  grid-template-columns: 52px 1fr;
   align-items: center;
   gap: 8px;
   margin-bottom: 7px;
 }
 
 .flowrow > span {
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--faint);
 }
 
@@ -654,7 +717,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .flowamt {
-  font-size: 12.5px;
+  font-size: 14.5px;
   margin-top: 2px;
   color: var(--dim);
 }
@@ -666,11 +729,11 @@ input[type='range']::-moz-range-thumb {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .flowtotal b {
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 600;
   color: var(--pr);
 }
@@ -689,7 +752,7 @@ input[type='range']::-moz-range-thumb {
 
 .cnote {
   margin: 7px 0 0;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--dim);
 }
 
@@ -731,12 +794,12 @@ input[type='range']::-moz-range-thumb {
 }
 
 .sum span {
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--faint);
 }
 
 .sum b {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -753,12 +816,12 @@ input[type='range']::-moz-range-thumb {
 table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 11.5px;
+  font-size: 14px;
 }
 
 th,
 td {
-  padding: 5px 7px;
+  padding: 8px 9px;
   text-align: right;
   white-space: nowrap;
   border-bottom: 1px solid var(--panel2);
@@ -771,7 +834,7 @@ th {
   color: var(--faint);
   font-weight: 600;
   font-family: var(--sans);
-  font-size: 11px;
+  font-size: 13.5px;
 }
 
 td:first-child,
@@ -793,7 +856,7 @@ tbody tr:last-child td {
 .legend {
   display: flex;
   gap: 12px;
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--faint);
   margin: 0 0 8px;
 }
@@ -808,7 +871,7 @@ tbody tr:last-child td {
 
 .prose p {
   margin: 0 0 9px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--dim);
 }
 
@@ -837,7 +900,7 @@ tbody tr:last-child td {
   border-radius: 9px;
   padding: 9px 14px;
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   min-height: 38px;
@@ -850,7 +913,7 @@ tbody tr:last-child td {
 }
 
 .toast {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--pr);
   font-weight: 600;
 }
@@ -863,7 +926,7 @@ tbody tr:last-child td {
 
 .foot p {
   margin: 0 0 5px;
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--faint);
 }
 

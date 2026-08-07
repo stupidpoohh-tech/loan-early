@@ -14,7 +14,7 @@ import {
   type Row,
   type Scenario,
 } from './loan';
-import { months, num, pct, ratio, short, signed, won, ym, ymd } from './format';
+import { months, num, pct, short, signed, won, ym, ymd } from './format';
 
 interface State {
   cfg: LoanConfig;
@@ -227,6 +227,7 @@ const ui = {
   loanline: el<HTMLParagraphElement>('loanline'),
   inputmsg: el<HTMLParagraphElement>('inputmsg'),
   restored: el<HTMLParagraphElement>('restored'),
+  netLabel: el<HTMLParagraphElement>('netLabel'),
   nextDate: el<HTMLInputElement>('nextDate'),
   nextNo: el<HTMLInputElement>('nextNo'),
   feeRate: el<HTMLInputElement>('feeRate'),
@@ -374,11 +375,11 @@ function renderFlow(s: Scenario): void {
       <span>돌아옴</span>
       <div>
         <div class="flowbar flowin" style="width:${inW.toFixed(2)}%">${ticks}</div>
-        <p class="flowamt mono">+${num(s.less)}원 · ${s.count > 0 ? `${s.count}회에 나눠서` : '남은 회차 없음'}</p>
+        <p class="flowamt mono">+${num(s.less)}원 · ${s.count > 0 ? `${s.count}번에 나눠서` : '더 낼 것이 없습니다'}</p>
       </div>
     </div>
     <div class="flowtotal">
-      <span>순이득 — 돌아온 돈에서 넣은 돈을 뺀 값</span>
+      <span>내 손에 남는 돈 — 돌아온 돈에서 넣은 돈을 뺀 값</span>
       <b class="mono${s.net < 0 ? ' neg' : ''}">${signed(s.net)}</b>
     </div>`;
 }
@@ -464,16 +465,16 @@ function renderTable(s: Scenario, cfg: LoanConfig, base: Row[]): void {
 }
 
 function methodDesc(s: Scenario, cfg: LoanConfig, base: Row[]): string {
-  if (s.amount <= 0) return '금액을 정해 주세요';
-  if (s.count === 0) return '완납입니다';
+  if (s.amount <= 0) return '갚을 돈을 정해 주세요';
+  if (s.count === 0) return '대출이 모두 끝납니다';
   if (s.method === 'term' || s.recycle) {
-    if (s.monthsSaved <= 0) return '마지막 회차 금액이 줄어듭니다';
+    if (s.monthsSaved <= 0) return '마지막에 내는 돈이 줄어듭니다';
     const before = dateOfInstallment(cfg, base.length - 1);
     const after = dateOfInstallment(cfg, s.delayMonths + s.count - 1);
-    return `만기가 ${s.monthsSaved}회 당겨집니다 · ${ym(before)} → ${ym(after)}`;
+    return `대출이 ${s.monthsSaved}개월 빨리 끝납니다 · ${ymKo(before)} → ${ymKo(after)}`;
   }
-  if (s.drop <= 0) return '납입액이 내려가지 않습니다';
-  return `매달 ${num(s.drop)}원씩 덜 냅니다 · 회차는 그대로`;
+  if (s.drop <= 0) return '매달 내는 돈이 줄지 않습니다';
+  return `매달 ${num(s.drop)}원씩 덜 냅니다 · 내는 횟수는 그대로`;
 }
 
 function setDim(node: HTMLElement, on: boolean): void {
@@ -505,16 +506,21 @@ function renderLoanLine(a: Analysis): void {
     return;
   }
   ui.loanline.innerHTML =
-    `남은 회차 <b>${a.count}회</b> (${months(a.count)}) · ` +
-    `만기 <b>${ym(a.maturityDate)}</b> · 남은 총이자 <b>${num(a.totalInterest)}원</b>`;
+    `지금 이대로 두시면 앞으로 <b>${a.count}번</b> 더 내시고 (${months(a.count)}), ` +
+    `<b>${ymKo(a.maturityDate)}</b>에 끝납니다. 그동안 낼 이자는 <b>${num(a.totalInterest)}원</b>입니다.`;
+}
+
+/** 문장 안에 들어가는 날짜 — "2031.11" 보다 "2031년 11월" 이 읽힙니다 */
+function ymKo(d: Date): string {
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
 }
 
 /** 빈 칸을 하나씩 짚어 줍니다. "0보다 큰 값" 보다 무엇이 없는지가 중요합니다. */
 function missingFields(): string {
   const miss: string[] = [];
-  if (state.cfg.balance <= 0) miss.push('남은 원금');
-  if (state.cfg.rate <= 0) miss.push('연 이율');
-  if (state.cfg.payment <= 0) miss.push('월 납입액');
+  if (state.cfg.balance <= 0) miss.push('아직 갚아야 할 돈');
+  if (state.cfg.rate <= 0) miss.push('이자율');
+  if (state.cfg.payment <= 0) miss.push('매달 내는 돈');
   return miss.join(', ');
 }
 
@@ -542,17 +548,17 @@ function render(): void {
     // 아직 아무것도 넣지 않은 첫 화면에 경고를 띄울 이유는 없습니다.
     if (isBlank(state)) {
       ui.inputmsg.hidden = true;
-      clearResults('위 세 칸을 채우면 결과가 바로 나옵니다.');
+      clearResults('위 세 칸을 채우시면 결과가 바로 나옵니다.');
       return;
     }
     const miss = missingFields();
     ui.inputmsg.hidden = false;
     ui.inputmsg.textContent =
       a.problem === 'payment-too-small'
-        ? `월 납입액이 한 달 이자(${num(a.firstInterest)}원)보다 적어 원금이 줄지 않습니다. 금액을 다시 확인해 주세요.`
-        : miss
-          ? `${miss}을 입력해 주세요.`
-          : '남은 원금·연 이율·월 납입액을 0보다 큰 값으로 입력해 주세요.';
+        ? `매달 내는 돈이 한 달 이자(${num(a.firstInterest)}원)보다 적습니다. 이러면 원금이 줄지 않으니 금액을 다시 확인해 주세요.`
+          : miss
+            ? `${miss}을 입력해 주세요.`
+            : '세 칸을 모두 0보다 큰 값으로 입력해 주세요.';
     clearResults('대출 정보를 먼저 채워 주세요.');
     return;
   }
@@ -614,7 +620,8 @@ function render(): void {
 
   // ④ 결론
   if (off) {
-    ui.verdict.textContent = '갚을 금액을 정하면 결과가 나옵니다.';
+    ui.verdict.textContent = '위에서 얼마를 갚으실지 정해 주세요.';
+    ui.netLabel.hidden = true;
     ui.netBig.textContent = '';
     ui.ratioLine.textContent = '';
   } else {
@@ -624,19 +631,28 @@ function render(): void {
         ? '남은 대출이 모두 없어집니다'
         : s.method === 'term' || s.recycle
           ? s.monthsSaved > 0
-            ? `만기가 <b>${s.monthsSaved}회</b> 당겨집니다`
-            : '마지막 회차 금액이 줄어듭니다'
+            ? `대출이 <b>${s.monthsSaved}개월</b> 빨리 끝납니다`
+            : '마지막에 내는 돈이 줄어듭니다'
           : s.drop > 0
             ? `매달 <b>${num(s.drop)}원</b>씩 덜 냅니다`
-            : '납입액이 내려가지 않습니다';
+            : '매달 내는 돈이 줄지 않습니다';
     ui.verdict.innerHTML = `<b>${num(s.amount)}원</b>을 ${when} 갚으면 ${what}.`;
+    ui.netLabel.hidden = false;
+    ui.netLabel.textContent = s.net >= 0 ? '이렇게 하면 내 손에 남는 돈' : '이렇게 하면 오히려 손해 보는 돈';
     ui.netBig.textContent = signed(s.net);
     ui.netBig.classList.toggle('neg', s.net < 0);
+    // "1.81배" 같은 비율만 두면 무엇 대비인지 알 수 없습니다. 들어가는 돈과
+    // 안 내게 되는 돈을 문장으로 풀어 씁니다.
     ui.ratioLine.innerHTML =
-      `넣는 돈 <span class="mono">${num(s.invested)}원</span>` +
-      ` (수수료 ${num(s.fee)}원 · ${pct(s.feeRate)}${s.feeEstimated ? ' 추정' : ''}) 대비 ` +
-      `<span class="mono">${ratio(s.net, s.invested)}</span>` +
-      (s.clamped ? ' · 남은 잔액까지만 반영했습니다' : '');
+      `지금 <b>${num(s.invested)}원</b>을 내시고` +
+      (s.fee > 0
+        ? ` (수수료 ${num(s.fee)}원, ${pct(s.feeRate)}${s.feeEstimated ? ' 추정' : ''} 포함)`
+        : ' (수수료 없음)') +
+      `, 앞으로 <b>${num(s.less)}원</b>을 안 내게 됩니다.` +
+      (s.invested > 0
+        ? ` 넣으신 돈의 ${Math.round((s.net / s.invested) * 100)}%가 이득으로 남는 셈입니다.`
+        : '') +
+      (s.clamped ? ' · 남은 금액까지만 반영했습니다.' : '');
   }
 
   if (!off) {
