@@ -265,7 +265,6 @@ const ui = {
   flow: el<HTMLDivElement>('flow'),
   flowCard: el<HTMLElement>('flowCard'),
   curve: el<HTMLDivElement>('curve'),
-  curveCard: el<HTMLElement>('curveCard'),
   curveNote: el<HTMLParagraphElement>('curveNote'),
   sumLess: el<HTMLElement>('sumLess'),
   sumInvested: el<HTMLElement>('sumInvested'),
@@ -430,11 +429,12 @@ function renderCurve(s: Scenario, cfg: LoanConfig): void {
     </svg>`;
 
   if (be === null) {
-    ui.curveNote.innerHTML = '만기까지 본전에 이르지 못합니다.';
+    ui.curveNote.innerHTML = '<i>언제부터 이득?</i> 만기까지 본전에 못 미칩니다';
   } else {
     const d = dateOfInstallment(cfg, be);
     const after = be - s.delayMonths;
-    ui.curveNote.innerHTML = `본전 <b>${cfg.nextNo + be}회차 · ${ym(d)}</b> — 상환하고 <b>${months(after + 1)}</b> 뒤부터 이득입니다.`;
+    // 한 줄을 넘기면 그래프가 화면 밖으로 밀립니다
+    ui.curveNote.innerHTML = `<i>언제부터 이득?</i> <b>${ymKo(d)}</b>부터 · 갚고 ${months(after + 1)} 뒤`;
   }
 }
 
@@ -503,7 +503,7 @@ function clearResults(message: string): void {
   ui.sumRest.textContent = '—';
   ui.tableWrap.innerHTML = '';
   ui.stack.innerHTML = '';
-  for (const node of [ui.methodCard, ui.flowCard, ui.curveCard]) setDim(node, true);
+  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, true);
 }
 
 function renderLoanLine(a: Analysis): void {
@@ -601,7 +601,7 @@ function render(): void {
   const s = state.method === 'term' ? term : pay;
 
   const off = state.amount <= 0;
-  for (const node of [ui.methodCard, ui.flowCard, ui.curveCard]) setDim(node, off);
+  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, off);
 
   // ⑤ 방식 비교
   ui.netTerm.textContent = signed(term.net);
@@ -637,6 +637,7 @@ function render(): void {
     ui.stickybar.hidden = true;
   } else {
     const when = state.delayMonths === 0 ? '지금' : `${state.delayMonths}개월 뒤에`;
+
     const what =
       s.count === 0
         ? '남은 대출이 모두 없어집니다'
@@ -647,7 +648,8 @@ function render(): void {
           : s.drop > 0
             ? `매달 <b>${num(s.drop)}원</b>씩 덜 냅니다`
             : '매달 내는 돈이 줄지 않습니다';
-    ui.verdict.innerHTML = `<b>${num(s.amount)}원</b>을 ${when} 갚으면 ${what}.`;
+    // '지금'은 바로 위 시점 슬라이더가 이미 말하고 있어 되풀이하지 않습니다
+    ui.verdict.innerHTML = state.delayMonths === 0 ? `${what}.` : `${when} 갚으시면 ${what}.`;
     ui.netLabel.hidden = false;
     ui.netLabel.textContent = s.net >= 0 ? '이렇게 하면 내 손에 남는 돈' : '이렇게 하면 오히려 손해 보는 돈';
     const nextNet = signed(s.net);

@@ -307,8 +307,8 @@ h2 {
 
 /* 컨트롤 바로 아래 붙은 '답' 패널 — 구분선보다 한 덩어리로 읽힙니다 */
 .verdict {
-  margin-top: 14px;
-  padding: 16px 15px 15px;
+  margin-top: 12px;
+  padding: 14px 14px 13px;
   background: #f2faf7;
   border: 1px solid #cbe9dc;
   border-radius: 12px;
@@ -321,7 +321,7 @@ h2 {
 }
 
 .vlabel {
-  margin: 12px 0 2px;
+  margin: 9px 0 1px;
   font-size: 15px;
   font-weight: 600;
   color: var(--dim);
@@ -621,9 +621,22 @@ input[type='range']::-moz-range-thumb {
 
 .chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 7px;
   margin-top: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  /* 오른쪽에 더 있다는 걸 흐림으로 알립니다 */
+  mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent);
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: none;
 }
 
 .chip {
@@ -683,11 +696,11 @@ input[type='range']::-moz-range-thumb {
 }
 
 .big {
-  margin: 2px 0 0;
+  margin: 1px 0 0;
   font-family: var(--serif);
   font-weight: 700;
   /* 좁은 화면에서도 한 줄에 들어가야 합니다 */
-  font-size: clamp(28px, 9vw, 38px);
+  font-size: clamp(26px, 8.2vw, 34px);
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--pr);
@@ -723,7 +736,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .vsub {
-  margin: 3px 0 0;
+  margin: 10px 0 0;
   font-size: 14.5px;
   color: var(--faint);
 }
@@ -876,13 +889,25 @@ input[type='range']::-moz-range-thumb {
 #curve svg {
   display: block;
   width: 100%;
-  height: 132px;
+  height: 88px;
+}
+
+.verdict #curve {
+  margin-top: 5px;
 }
 
 .cnote {
-  margin: 7px 0 0;
-  font-size: 14.5px;
+  margin: 11px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--dim);
+}
+
+/* 그래프가 무엇을 그린 것인지 먼저 알려 줍니다 */
+.cnote i {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .cnote b {
