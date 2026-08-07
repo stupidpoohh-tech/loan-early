@@ -31,17 +31,17 @@
         <div class="grid3">
           <label class="field">
             <span>남은 원금</span>
-            <input id="balance" type="text" inputmode="numeric" autocomplete="off" />
+            <input id="balance" type="text" inputmode="numeric" autocomplete="off" placeholder="예: 30,000,000" />
             <em>원</em>
           </label>
           <label class="field">
             <span>연 이율</span>
-            <input id="rate" type="number" inputmode="decimal" min="0" max="100" step="0.01" />
+            <input id="rate" type="number" inputmode="decimal" min="0" max="100" step="0.01" placeholder="예: 15" />
             <em>%</em>
           </label>
           <label class="field">
             <span>월 납입액</span>
-            <input id="payment" type="text" inputmode="numeric" autocomplete="off" />
+            <input id="payment" type="text" inputmode="numeric" autocomplete="off" placeholder="예: 578,903" />
             <em>원</em>
           </label>
         </div>
@@ -276,7 +276,7 @@
       <!-- ⑩ 도구 -->
       <section class="card tools">
         <button type="button" class="btn" id="copyLink">이 설정 링크 복사</button>
-        <button type="button" class="btn ghost" id="reset">예시값으로 되돌리기</button>
+        <button type="button" class="btn ghost" id="reset">예시로 채워보기</button>
         <span class="toast" id="toast" hidden></span>
       </section>
 
@@ -286,7 +286,7 @@
         <p>
           계산은 브라우저 안에서만 이루어집니다. 다음에 다시 오셔도 이어서 보실 수 있도록 입력하신
           값을 <b>이 브라우저에만</b> 저장하며, 어디로도 전송하지 않습니다. 지우시려면
-          [예시값으로 되돌리기]를 누르시거나 브라우저의 사이트 데이터를 삭제하시면 됩니다.
+          [입력값 지우기]를 누르시거나 브라우저의 사이트 데이터를 삭제하시면 됩니다.
         </p>
       </footer>
     </div>

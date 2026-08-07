@@ -38,7 +38,7 @@ function nextTwentyFifth(): string {
  * 납입액은 84회에 딱 떨어지는 값입니다. 578,880원 같은 근사치를 쓰면
  * 마지막에 3천원짜리 85회차가 붙어 첫 화면부터 어수선해집니다.
  */
-function defaults(): State {
+function example(): State {
   const next = nextTwentyFifth();
   const nd = parseDate(next);
   return {
@@ -61,7 +61,27 @@ function defaults(): State {
   };
 }
 
-let state: State = defaults();
+/**
+ * 첫 화면 — 개인의 숫자 칸은 비워 둡니다.
+ * 예시 숫자를 채워 두면 내가 넣은 값인지 남이 넣어 둔 값인지 구분이 안 되고,
+ * 모바일에서는 지우고 다시 넣는 손이 한 번 더 갑니다.
+ * 수수료율·회차·날짜는 개인 정보가 아니라 관행값이라 그대로 둡니다.
+ */
+function blank(): State {
+  const s = example();
+  s.cfg.balance = 0;
+  s.cfg.rate = 0;
+  s.cfg.payment = 0;
+  s.amount = 0;
+  return s;
+}
+
+/** 세 칸이 다 비었으면 아직 아무것도 시작하지 않은 화면입니다. */
+function isBlank(s: State): boolean {
+  return s.cfg.balance <= 0 && s.cfg.rate <= 0 && s.cfg.payment <= 0;
+}
+
+let state: State = blank();
 
 // ── 저장 · 복원 ────────────────────────────────────────────────
 
@@ -112,7 +132,7 @@ function unpack(raw: string): State | null {
     const b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
     const o = JSON.parse(atob(b64)) as Partial<Packed>;
     if (o.v !== 1) return null;
-    const d = defaults();
+    const d = example();
     const n = (x: unknown, fb: number) => (typeof x === 'number' && Number.isFinite(x) ? x : fb);
     const s = (x: unknown, fb: string) => (typeof x === 'string' && x ? x : fb);
     return {
@@ -288,7 +308,7 @@ function reformatMoney(input: HTMLInputElement): void {
 /** 입력칸에 상태를 씁니다. 사용자가 타이핑하는 중에는 부르지 않습니다. */
 function fillInputs(): void {
   setMoney(ui.balance, state.cfg.balance);
-  ui.rate.value = String(state.cfg.rate);
+  ui.rate.value = state.cfg.rate > 0 ? String(state.cfg.rate) : '';
   setMoney(ui.payment, state.cfg.payment);
   ui.nextDate.value = state.cfg.nextDate;
   ui.nextNo.value = String(state.cfg.nextNo);
@@ -489,6 +509,19 @@ function renderLoanLine(a: Analysis): void {
     `만기 <b>${ym(a.maturityDate)}</b> · 남은 총이자 <b>${num(a.totalInterest)}원</b>`;
 }
 
+/** 빈 칸을 하나씩 짚어 줍니다. "0보다 큰 값" 보다 무엇이 없는지가 중요합니다. */
+function missingFields(): string {
+  const miss: string[] = [];
+  if (state.cfg.balance <= 0) miss.push('남은 원금');
+  if (state.cfg.rate <= 0) miss.push('연 이율');
+  if (state.cfg.payment <= 0) miss.push('월 납입액');
+  return miss.join(', ');
+}
+
+function syncResetButton(): void {
+  ui.reset.textContent = isBlank(state) ? '예시로 채워보기' : '입력값 지우기';
+}
+
 function render(): void {
   const cfg = state.cfg;
   const a = analyze(cfg);
@@ -503,12 +536,23 @@ function render(): void {
   ui.fillMaturity.hidden = !calcMaturity || calcMaturity === cfg.maturity;
   ui.fillMaturity.dataset['d'] = calcMaturity;
 
+  syncResetButton();
+
   if (a.problem !== 'ok') {
+    // 아직 아무것도 넣지 않은 첫 화면에 경고를 띄울 이유는 없습니다.
+    if (isBlank(state)) {
+      ui.inputmsg.hidden = true;
+      clearResults('위 세 칸을 채우면 결과가 바로 나옵니다.');
+      return;
+    }
+    const miss = missingFields();
     ui.inputmsg.hidden = false;
     ui.inputmsg.textContent =
       a.problem === 'payment-too-small'
         ? `월 납입액이 한 달 이자(${num(a.firstInterest)}원)보다 적어 원금이 줄지 않습니다. 금액을 다시 확인해 주세요.`
-        : '남은 원금·연 이율·월 납입액을 0보다 큰 값으로 입력해 주세요.';
+        : miss
+          ? `${miss}을 입력해 주세요.`
+          : '남은 원금·연 이율·월 납입액을 0보다 큰 값으로 입력해 주세요.';
     clearResults('대출 정보를 먼저 채워 주세요.');
     return;
   }
@@ -715,9 +759,12 @@ ui.copyLink.addEventListener('click', async () => {
   }
 });
 
+// 비어 있으면 예시를 넣어 주고, 값이 있으면 지웁니다. 버튼 하나로 양쪽을 겸합니다.
 ui.reset.addEventListener('click', () => {
-  state = defaults();
-  forget();
+  const clearing = !isBlank(state);
+  state = clearing ? blank() : example();
+  if (clearing) forget();
+  else touched = true; // 예시를 넣은 것도 사용자의 선택이라 남겨 둡니다
   history.replaceState(null, '', location.pathname + location.search);
   ui.deriveBox.hidden = true;
   ui.deriveToggle.textContent = '남은 회차로 계산';
@@ -725,7 +772,7 @@ ui.reset.addEventListener('click', () => {
   render();
   origin = 'default';
   showOrigin();
-  toast('예시값으로 되돌렸습니다');
+  toast(clearing ? '입력값을 지웠습니다' : '예시값을 넣었습니다');
 });
 
 window.addEventListener('hashchange', () => {
