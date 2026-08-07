@@ -109,13 +109,38 @@ describe('시나리오 픽스처', () => {
 });
 
 describe('추가 성질', () => {
-  it('P=0 이면 net=0, less=0', () => {
+  // 이전에는 recycle=false 만 봤습니다. 'pay' + recycle 조합에서 reduced 가 0이라
+  // 월 납입액 전체가 추가 상환으로 오인돼, 상환액이 0인데 수수료 486,279원이
+  // 붙던 버그가 이 빈틈으로 빠져나갔습니다.
+  it('P=0 이면 net=0, less=0 — 차액 재투입을 켜도, 지연을 줘도 마찬가지', () => {
     for (const method of ['pay', 'term'] as const) {
-      const s = simulate(cfg, base, 0, 0, method, false, { today });
-      expect(s.less).toBe(0);
-      expect(s.invested).toBe(0);
-      expect(s.net).toBe(0);
+      for (const recycle of [false, true]) {
+        for (const m of [0, 3]) {
+          const s = simulate(cfg, base, 0, m, method, recycle, { today });
+          const at = `${method}/recycle=${recycle}/m=${m}`;
+          expect(s.less, at).toBe(0);
+          expect(s.fee, at).toBe(0);
+          expect(s.invested, at).toBe(0);
+          expect(s.net, at).toBe(0);
+          expect(s.feeEstimated, at).toBe(false);
+        }
+      }
     }
+  });
+
+  it('상환액이 있을 때는 차액 재투입 수수료가 정상적으로 가산된다', () => {
+    const plain = simulate(cfg, base, 1_000_000, 0, 'pay', false, { today });
+    const recycled = simulate(cfg, base, 1_000_000, 0, 'pay', true, { today });
+    expect(plain.feeEstimated).toBe(false);
+    expect(recycled.feeEstimated).toBe(true);
+    expect(recycled.fee).toBeGreaterThan(plain.fee);
+  });
+
+  it('완납이면 재투입할 차액이 없어 추정 수수료가 붙지 않는다', () => {
+    const s = simulate(cfg, base, cfg.balance, 0, 'pay', true, { today });
+    expect(s.count).toBe(0);
+    expect(s.feeEstimated).toBe(false);
+    expect(s.fee).toBe(Math.floor(cfg.balance * (cfg.feeRate / 100)));
   });
 
   it("method='pay' 는 회차를 유지하고 납입액을 낮춘다", () => {

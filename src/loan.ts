@@ -298,10 +298,17 @@ export function simulate(
 
   // 실제 청구액이라 원 미만 절사입니다.
   let fee = Math.floor(P * fr);
-  const feeEstimated = method === 'pay' && recycle;
+
+  // 매달 추가로 넣는 차액. P 가 0이면 재산정할 것이 없어 reduced 도 0인데,
+  // 그때 (payment - reduced) 를 그대로 쓰면 매달 내는 원리금 전체를 추가
+  // 상환으로 오인해 상환액이 0인데도 수수료가 붙습니다.
+  const recycled =
+    method === 'pay' && recycle && P > 0 && reduced > 0 ? Math.max(0, cfg.payment - reduced) : 0;
+
+  const feeEstimated = recycled > 0 && rows.length > 0;
   if (feeEstimated) {
     // 매달 같은 차액을 추가로 넣는다고 가정한 추정치라 반올림합니다.
-    fee += Math.round(Math.max(0, cfg.payment - reduced) * rows.length * fr);
+    fee += Math.round(recycled * rows.length * fr);
   }
 
   const less = baseRest - newTotal;
