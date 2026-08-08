@@ -154,20 +154,17 @@
       <section class="card" id="methodCard">
         <h2>갚고 나면 무엇이 줄어드나요?</h2>
         <p class="sub">은행마다 방식이 달라 이득이 갈립니다. 모르셔도 됩니다 — 둘 다 보여드립니다.</p>
-        <div class="methods" role="radiogroup" aria-label="상환 방식">
-          <button type="button" class="method" id="cardTerm" role="radio" aria-checked="false">
+        <div class="seg" role="radiogroup" aria-label="상환 방식">
+          <button type="button" class="segbtn" id="cardTerm" role="radio" aria-checked="false">
             <span class="mname">대출이 빨리 끝남</span>
-            <span class="mterm">기간 단축</span>
             <span class="mnet mono" id="netTerm"></span>
-            <span class="mdesc" id="descTerm"></span>
           </button>
-          <button type="button" class="method" id="cardPay" role="radio" aria-checked="false">
+          <button type="button" class="segbtn" id="cardPay" role="radio" aria-checked="false">
             <span class="mname">매달 덜 냄</span>
-            <span class="mterm">납입액 재산정</span>
             <span class="mnet mono" id="netPay"></span>
-            <span class="mdesc" id="descPay"></span>
           </button>
         </div>
+        <div class="mpop" id="mpop" data-side="term" hidden></div>
         <label class="check" id="recycleWrap" hidden>
           <input id="recycle" type="checkbox" />
           <span>줄어든 만큼 매달 계속 더 갚기 <em id="recycleHint"></em></span>

@@ -269,8 +269,7 @@ const ui = {
   cardPay: el<HTMLButtonElement>('cardPay'),
   netTerm: el<HTMLElement>('netTerm'),
   netPay: el<HTMLElement>('netPay'),
-  descTerm: el<HTMLElement>('descTerm'),
-  descPay: el<HTMLElement>('descPay'),
+  mpop: el<HTMLDivElement>('mpop'),
   recycleWrap: el<HTMLLabelElement>('recycleWrap'),
   recycle: el<HTMLInputElement>('recycle'),
   recycleHint: el<HTMLElement>('recycleHint'),
@@ -498,8 +497,7 @@ function clearResults(message: string): void {
   ui.ratioLine.textContent = '';
   ui.netTerm.textContent = '—';
   ui.netPay.textContent = '—';
-  ui.descTerm.textContent = '';
-  ui.descPay.textContent = '';
+  ui.mpop.hidden = true;
   ui.flow.innerHTML = '';
   ui.curve.innerHTML = '';
   ui.curveNote.textContent = '';
@@ -632,8 +630,11 @@ function render(): void {
   ui.netPay.textContent = signed(pay.net);
   ui.netTerm.classList.toggle('neg', term.net < 0);
   ui.netPay.classList.toggle('neg', pay.net < 0);
-  ui.descTerm.textContent = methodDesc(term, cfg, a.base);
-  ui.descPay.textContent = methodDesc(pay, cfg, a.base);
+  // 선택된 방식의 상세는 토글 아래 말풍선 하나로 — 화살표가 선택 쪽을 가리킵니다
+  ui.mpop.hidden = false;
+  ui.mpop.dataset['side'] = state.method;
+  ui.mpop.innerHTML =
+    `<b>${state.method === 'term' ? '기간 단축' : '납입액 재산정'}</b> · ${methodDesc(s, cfg, a.base)}`;
   ui.cardTerm.setAttribute('aria-checked', String(state.method === 'term'));
   ui.cardPay.setAttribute('aria-checked', String(state.method === 'pay'));
   ui.recycleWrap.hidden = state.method !== 'pay';
