@@ -467,7 +467,7 @@ function renderLoanLine(a: Analysis): void {
     return;
   }
   ui.loanline.innerHTML =
-    `<b>${a.count}번</b> 더 · <b>${ymKo(a.maturityDate)}</b>까지 · 이자 <b>${short(a.totalInterest)}원</b>`;
+    `<b>${a.count}번</b> 더 · <b>${ymKo(a.maturityDate)}</b> · 이자 <b>${short(a.totalInterest)}</b>`;
 }
 
 /**
@@ -489,7 +489,7 @@ function syncLoanCard(): void {
   ui.loanEdit.hidden = fold;
   if (!fold) return;
   ui.loanbarText.textContent =
-    `${short(state.cfg.balance)}원 · ${state.cfg.rate}% · 월 ${short(state.cfg.payment)}원`;
+    `${short(state.cfg.balance)} · ${state.cfg.rate}% · 월 ${short(state.cfg.payment)}`;
 }
 
 /** 이 금리 아래면 예금과 비교할 실익이 생깁니다 (예금 3%대, 이자소득세 15.4% 감안) */
@@ -644,6 +644,10 @@ function render(): void {
     ui.ratioLine.textContent = '';
     ui.ratewarn.hidden = true;
     ui.stickybar.hidden = true;
+    // 금액을 0으로 되돌리면 직전 계산의 분할·곡선이 남습니다. 같이 지웁니다.
+    ui.inout.hidden = true;
+    ui.curve.innerHTML = '';
+    ui.curveNote.textContent = '';
   } else {
     const when = state.delayMonths === 0 ? '지금' : `${state.delayMonths}개월 뒤에`;
 
