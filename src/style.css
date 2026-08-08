@@ -353,8 +353,8 @@ h2 {
 
 /* 컨트롤 바로 아래 붙은 '답' 패널 — 구분선보다 한 덩어리로 읽힙니다 */
 .verdict {
-  margin-top: 10px;
-  padding: 12px 13px 12px;
+  margin-top: 9px;
+  padding: 11px 13px 11px;
   background: #f2faf7;
   border: 1px solid #cbe9dc;
   border-radius: 12px;
@@ -747,19 +747,7 @@ input[type='range']::-moz-range-thumb {
   color: var(--dim);
 }
 
-.flowrest {
-  margin: 12px 0 0;
-  padding-top: 10px;
-  border-top: 1px solid var(--panel2);
-  font-size: 13.5px;
-  color: var(--dim);
-}
 
-.flowrest b {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
 
 .loss {
   margin: 6px 0 0;
@@ -854,6 +842,10 @@ input[type='range']::-moz-range-thumb {
 
 /* ── 방식 토글 + 플로팅 설명 ─────────────────────── */
 
+.sliderrow .check {
+  margin-top: 9px;
+}
+
 .seg {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -868,7 +860,7 @@ input[type='range']::-moz-range-thumb {
   display: grid;
   gap: 1px;
   justify-items: center;
-  padding: 10px 6px;
+  padding: 7px 6px;
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -901,43 +893,10 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* 선택한 쪽을 화살표로 가리키는 말풍선 */
-.mpop {
-  position: relative;
-  margin-top: 11px;
-  padding: 11px 13px;
-  background: var(--paper);
-  border: 1px solid var(--hair);
-  border-radius: 12px;
-  box-shadow: 0 7px 20px rgba(12, 16, 22, 0.09);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--dim);
-}
 
-.mpop b {
-  color: var(--text);
-}
 
-.mpop::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  width: 10px;
-  height: 10px;
-  background: var(--paper);
-  border-left: 1px solid var(--hair);
-  border-top: 1px solid var(--hair);
-  transform: rotate(45deg);
-  transition: left 0.15s ease;
-}
 
-.mpop[data-side='term']::before {
-  left: calc(25% - 5px);
-}
 
-.mpop[data-side='pay']::before {
-  left: calc(75% - 5px);
-}
 
 
 .check {
@@ -966,25 +925,8 @@ input[type='range']::-moz-range-thumb {
 
 /* ── 현금흐름 ─────────────────────────────────────── */
 
-.flowrow {
-  display: grid;
-  grid-template-columns: 52px 1fr;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 7px;
-}
 
-.flowrow > span {
-  font-size: 13.5px;
-  color: var(--faint);
-}
 
-.flowbar {
-  height: 22px;
-  display: flex;
-  gap: 1px;
-  align-items: stretch;
-}
 
 .flowbar i {
   display: block;
@@ -1002,11 +944,6 @@ input[type='range']::-moz-range-thumb {
   background: var(--pr);
 }
 
-.flowamt {
-  font-size: 15px;
-  margin-top: 2px;
-  color: var(--dim);
-}
 
 
 .flowtotal b {
@@ -1024,11 +961,50 @@ input[type='range']::-moz-range-thumb {
 #curve svg {
   display: block;
   width: 100%;
-  height: 68px;
+  height: 64px;
 }
 
 .verdict #curve {
   margin-top: 5px;
+}
+
+/* 나감·돌아옴을 한 줄 분할로 — 막대 그래프 없이 곡선이 흐름을 보여줍니다 */
+.inout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 8px 0 10px;
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.io {
+  display: grid;
+  gap: 0;
+  padding: 7px 12px;
+}
+
+.io + .io {
+  border-left: 1px solid var(--hair);
+}
+
+.io span {
+  font-size: 13.5px;
+  color: var(--faint);
+}
+
+.io b {
+  /* 반 폭 칸에 "+15,279,713원" 이 들어가야 합니다 */
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--pr);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+.io b.neg {
+  color: var(--it);
 }
 
 .cnote {
@@ -1200,10 +1176,6 @@ tbody tr:last-child td {
   display: none !important;
 }
 
-.dim {
-  opacity: 0.42;
-  pointer-events: none;
-}
 
 @media (prefers-reduced-motion: reduce) {
   * {

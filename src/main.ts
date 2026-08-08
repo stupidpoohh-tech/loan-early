@@ -269,12 +269,12 @@ const ui = {
   cardPay: el<HTMLButtonElement>('cardPay'),
   netTerm: el<HTMLElement>('netTerm'),
   netPay: el<HTMLElement>('netPay'),
-  mpop: el<HTMLDivElement>('mpop'),
   recycleWrap: el<HTMLLabelElement>('recycleWrap'),
   recycle: el<HTMLInputElement>('recycle'),
   recycleHint: el<HTMLElement>('recycleHint'),
-  flow: el<HTMLDivElement>('flow'),
-  flowCard: el<HTMLElement>('flowCard'),
+  inout: el<HTMLDivElement>('inout'),
+  ioOut: el<HTMLElement>('ioOut'),
+  ioIn: el<HTMLElement>('ioIn'),
   curve: el<HTMLDivElement>('curve'),
   curveNote: el<HTMLParagraphElement>('curveNote'),
   stack: el<HTMLDivElement>('stack'),
@@ -282,7 +282,6 @@ const ui = {
   copyLink: el<HTMLButtonElement>('copyLink'),
   reset: el<HTMLButtonElement>('reset'),
   toast: el<HTMLElement>('toast'),
-  methodCard: el<HTMLElement>('methodCard'),
 };
 
 // ── 금액 입력칸 ────────────────────────────────────────────────
@@ -369,31 +368,6 @@ function renderChips(balanceAt: number): void {
     `<button type="button" class="chip" data-v="${balanceAt}" aria-pressed="${state.amount >= balanceAt}">전액</button>`;
 }
 
-function renderFlow(s: Scenario): void {
-  const scale = Math.max(s.invested, s.less, 1);
-  const outW = (s.invested / scale) * 100;
-  const inW = (s.less / scale) * 100;
-  const blocks = Math.min(Math.max(s.count, 1), 60);
-  const ticks = '<i></i>'.repeat(blocks);
-
-  ui.flow.innerHTML = `
-    <div class="flowrow">
-      <span>나감</span>
-      <div>
-        <div class="flowbar flowout" style="width:${outW.toFixed(2)}%"><i style="flex:1"></i></div>
-        <p class="flowamt mono">−${num(s.invested)}원</p>
-      </div>
-    </div>
-    <div class="flowrow">
-      <span>돌아옴</span>
-      <div>
-        <div class="flowbar flowin" style="width:${inW.toFixed(2)}%">${ticks}</div>
-        <p class="flowamt mono">+${num(s.less)}원 · ${s.count > 0 ? `${s.count}번에 나눠서` : '더 낼 것이 없습니다'}</p>
-      </div>
-    </div>
-    <p class="flowrest">이렇게 갚고도 남은 대출에서 이자 <b>${num(s.restInterest)}원</b>은 더 내게 됩니다.</p>`;
-}
-
 function renderCurve(s: Scenario, cfg: LoanConfig): void {
   const cum = s.cum;
   const len = cum.length;
@@ -437,8 +411,8 @@ function renderCurve(s: Scenario, cfg: LoanConfig): void {
     ui.curveNote.innerHTML = '<i>언제부터 이득?</i> 만기까지 본전에 못 미칩니다';
   } else {
     const d = dateOfInstallment(cfg, be);
-    // 한 줄을 넘기면 그래프가 화면 밖으로 밀립니다
-    ui.curveNote.innerHTML = `<i>언제부터 이득?</i> <b>${ymKo(d)}</b>부터`;
+    ui.curveNote.innerHTML =
+      `<i>언제부터 이득?</i> <b>${ymKo(d)}</b>부터 · 갚고 ${months(be - s.delayMonths + 1)} 뒤`;
   }
 }
 
@@ -474,36 +448,17 @@ function renderTable(s: Scenario, cfg: LoanConfig, base: Row[]): void {
     `<svg viewBox="0 0 ${n} 100" preserveAspectRatio="none" role="img" aria-label="회차별 원금과 이자 구성">${stack}</svg>`;
 }
 
-function methodDesc(s: Scenario, cfg: LoanConfig, base: Row[]): string {
-  if (s.amount <= 0) return '갚을 돈을 정해 주세요';
-  if (s.count === 0) return '대출이 모두 끝납니다';
-  if (s.method === 'term' || s.recycle) {
-    if (s.monthsSaved <= 0) return '마지막에 내는 돈이 줄어듭니다';
-    const before = dateOfInstallment(cfg, base.length - 1);
-    const after = dateOfInstallment(cfg, s.delayMonths + s.count - 1);
-    return `대출이 ${s.monthsSaved}개월 빨리 끝납니다 · ${ymKo(before)} → ${ymKo(after)}`;
-  }
-  if (s.drop <= 0) return '매달 내는 돈이 줄지 않습니다';
-  return `매달 ${num(s.drop)}원씩 덜 냅니다 · 내는 횟수는 그대로`;
-}
-
-function setDim(node: HTMLElement, on: boolean): void {
-  node.classList.toggle('dim', on);
-}
-
 function clearResults(message: string): void {
   ui.verdict.textContent = message;
   ui.netBig.textContent = '';
   ui.ratioLine.textContent = '';
   ui.netTerm.textContent = '—';
   ui.netPay.textContent = '—';
-  ui.mpop.hidden = true;
-  ui.flow.innerHTML = '';
+  ui.inout.hidden = true;
   ui.curve.innerHTML = '';
   ui.curveNote.textContent = '';
   ui.tableWrap.innerHTML = '';
   ui.stack.innerHTML = '';
-  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, true);
 }
 
 function renderLoanLine(a: Analysis): void {
@@ -623,18 +578,12 @@ function render(): void {
   const s = state.method === 'term' ? term : pay;
 
   const off = state.amount <= 0;
-  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, off);
 
   // ⑤ 방식 비교
   ui.netTerm.textContent = signed(term.net);
   ui.netPay.textContent = signed(pay.net);
   ui.netTerm.classList.toggle('neg', term.net < 0);
   ui.netPay.classList.toggle('neg', pay.net < 0);
-  // 선택된 방식의 상세는 토글 아래 말풍선 하나로 — 화살표가 선택 쪽을 가리킵니다
-  ui.mpop.hidden = false;
-  ui.mpop.dataset['side'] = state.method;
-  ui.mpop.innerHTML =
-    `<b>${state.method === 'term' ? '기간 단축' : '납입액 재산정'}</b> · ${methodDesc(s, cfg, a.base)}`;
   ui.cardTerm.setAttribute('aria-checked', String(state.method === 'term'));
   ui.cardPay.setAttribute('aria-checked', String(state.method === 'pay'));
   ui.recycleWrap.hidden = state.method !== 'pay';
@@ -720,26 +669,22 @@ function render(): void {
       ui.netBig.classList.add('bump');
     }
     ui.netBig.classList.toggle('neg', s.net < 0);
-    // "1.81배" 같은 비율만 두면 무엇 대비인지 알 수 없습니다. 들어가는 돈과
-    // 안 내게 되는 돈을 문장으로 풀어 씁니다.
+    ui.inout.hidden = false;
+    // 반 폭 칸이라 만 단위로 줄입니다. 정확한 금액은 캡션·행동 안내에 있습니다.
+    ui.ioOut.textContent = `−${short(s.invested)}원`;
+    ui.ioIn.textContent = `+${short(s.less)}원`;
     ui.ratioLine.innerHTML =
-      `지금 <b>${num(s.invested)}원</b>을 내시고` +
       (s.fee > 0
-        ? ` (수수료 ${num(s.fee)}원, ${pct(s.feeRate)}${s.feeEstimated ? ' 추정' : ''} 포함)`
-        : ' (수수료 없음)') +
-      `, 앞으로 <b>${num(s.less)}원</b>을 안 내게 됩니다.` +
-      (s.invested > 0
-        ? ` 넣으신 돈의 ${Math.round((s.net / s.invested) * 100)}%가 이득으로 남는 셈입니다.`
-        : '') +
-      (s.breakeven === null
-        ? ''
-        : ` 갚고 ${months(s.breakeven - s.delayMonths + 1)} 뒤부터 이득으로 돌아섭니다.`) +
-      (s.clamped ? ' · 남은 금액까지만 반영했습니다.' : '');
+        ? `수수료 ${num(s.fee)}원(${pct(s.feeRate)}${s.feeEstimated ? ' 추정' : ''}) 포함`
+        : '수수료 없음') +
+      (s.invested > 0 ? ` · 넣은 돈의 ${Math.round((s.net / s.invested) * 100)}% 이득` : '') +
+      ` · 갚고도 이자 ${num(s.restInterest)}원 남음` +
+      (s.clamped ? ' · 남은 금액까지만 반영' : '');
 
     ui.sayAmount.textContent = `${num(s.amount)}원`;
     ui.sayCompare.innerHTML =
       `→ 기간이 줄면 <b>${signed(term.net)}</b>, 월 납입금이 줄면 <b>${signed(pay.net)}</b>. ` +
-      `답을 듣고 위 비교에서 맞는 쪽을 누르세요.`;
+      `답을 듣고 위 '은행이 어떻게 줄여 주나요?'에서 맞는 쪽을 누르세요.`;
     ui.sayFee.innerHTML =
       `→ 이 계산으로는 약 <b>${num(s.fee)}원</b>입니다. 많이 다르면 아래 수수료 설정을 고쳐 다시 보세요.`;
 
@@ -758,7 +703,6 @@ function render(): void {
   }
 
   if (!off) {
-    renderFlow(s);
     renderCurve(s, cfg);
   }
   renderTable(s, cfg, a.base);
