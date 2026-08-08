@@ -15,7 +15,7 @@ import {
   type Row,
   type Scenario,
 } from './loan';
-import { months, num, pct, short, signed, won, ym, ymd } from './format';
+import { months, num, pct, short, signed, ym, ymd } from './format';
 
 interface State {
   cfg: LoanConfig;
@@ -258,7 +258,6 @@ const ui = {
   waitHint: el<HTMLParagraphElement>('waitHint'),
   waitText: el<HTMLElement>('waitText'),
   waitApply: el<HTMLButtonElement>('waitApply'),
-  actionCard: el<HTMLElement>('actionCard'),
   sayAmount: el<HTMLElement>('sayAmount'),
   sayCompare: el<HTMLElement>('sayCompare'),
   sayFee: el<HTMLElement>('sayFee'),
@@ -279,9 +278,6 @@ const ui = {
   flowCard: el<HTMLElement>('flowCard'),
   curve: el<HTMLDivElement>('curve'),
   curveNote: el<HTMLParagraphElement>('curveNote'),
-  sumLess: el<HTMLElement>('sumLess'),
-  sumInvested: el<HTMLElement>('sumInvested'),
-  sumRest: el<HTMLElement>('sumRest'),
   stack: el<HTMLDivElement>('stack'),
   tableWrap: el<HTMLDivElement>('tableWrap'),
   copyLink: el<HTMLButtonElement>('copyLink'),
@@ -396,10 +392,7 @@ function renderFlow(s: Scenario): void {
         <p class="flowamt mono">+${num(s.less)}원 · ${s.count > 0 ? `${s.count}번에 나눠서` : '더 낼 것이 없습니다'}</p>
       </div>
     </div>
-    <div class="flowtotal">
-      <span>내 손에 남는 돈 — 돌아온 돈에서 넣은 돈을 뺀 값</span>
-      <b class="mono${s.net < 0 ? ' neg' : ''}">${signed(s.net)}</b>
-    </div>`;
+    <p class="flowrest">이렇게 갚고도 남은 대출에서 이자 <b>${num(s.restInterest)}원</b>은 더 내게 됩니다.</p>`;
 }
 
 function renderCurve(s: Scenario, cfg: LoanConfig): void {
@@ -510,12 +503,9 @@ function clearResults(message: string): void {
   ui.flow.innerHTML = '';
   ui.curve.innerHTML = '';
   ui.curveNote.textContent = '';
-  ui.sumLess.textContent = '—';
-  ui.sumInvested.textContent = '—';
-  ui.sumRest.textContent = '—';
   ui.tableWrap.innerHTML = '';
   ui.stack.innerHTML = '';
-  for (const node of [ui.methodCard, ui.flowCard, ui.actionCard]) setDim(node, true);
+  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, true);
 }
 
 function renderLoanLine(a: Analysis): void {
@@ -635,7 +625,7 @@ function render(): void {
   const s = state.method === 'term' ? term : pay;
 
   const off = state.amount <= 0;
-  for (const node of [ui.methodCard, ui.flowCard, ui.actionCard]) setDim(node, off);
+  for (const node of [ui.methodCard, ui.flowCard]) setDim(node, off);
 
   // ⑤ 방식 비교
   ui.netTerm.textContent = signed(term.net);
@@ -772,9 +762,6 @@ function render(): void {
   }
   renderTable(s, cfg, a.base);
 
-  ui.sumLess.textContent = won(s.less);
-  ui.sumInvested.textContent = won(s.invested);
-  ui.sumRest.textContent = won(s.restInterest);
 
   persist();
 }

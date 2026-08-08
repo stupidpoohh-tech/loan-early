@@ -106,8 +106,8 @@ h1 {
 
 h2 {
   font-size: 16px;
-  font-weight: 600;
-  color: var(--dim);
+  font-weight: 700;
+  color: var(--text);
   letter-spacing: 0.02em;
   margin-bottom: 12px;
 }
@@ -119,7 +119,7 @@ h2 {
 .lede {
   margin: 10px 0 0;
   color: var(--dim);
-  font-size: 15.5px;
+  font-size: 14.5px;
 }
 
 .lede b {
@@ -176,14 +176,14 @@ h2 {
   gap: 2px 6px;
   background: var(--paper);
   border: 1px solid var(--hair);
-  border-radius: 9px;
+  border-radius: 10px;
   padding: 11px 13px;
   min-height: 62px;
 }
 
 .field > span {
   grid-column: 1 / -1;
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--faint);
   font-family: var(--sans);
 }
@@ -191,26 +191,13 @@ h2 {
 /* 정식 용어는 남겨 둡니다 — 은행 앱·약정서와 말이 맞아야 찾을 수 있습니다 */
 .field > span i {
   font-style: normal;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
   color: #7c8797;
   margin-left: 5px;
 }
 
-.wheretofind {
-  margin: 12px 0 0;
-  padding: 13px 15px;
-  background: #f2f7fd;
-  border: 1px solid #cfe0f5;
-  border-radius: 10px;
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--dim);
-}
 
-.wheretofind b {
-  color: var(--text);
-}
 
 /* ── 다 채운 뒤 접히는 대출 한 줄 ─────────────────── */
 
@@ -262,7 +249,7 @@ h2 {
 }
 
 .tip > summary {
-  font-size: 14.5px;
+  font-size: 15.5px;
   font-weight: 600;
   color: var(--pr);
   min-height: 40px;
@@ -342,7 +329,7 @@ h2 {
 
 .sbgo {
   flex: none;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--faint);
   border-left: 1px solid var(--hair);
@@ -360,7 +347,7 @@ h2 {
   padding: 11px 13px;
   background: #fff8e8;
   border: 1px solid #f0dcae;
-  border-radius: 9px;
+  border-radius: 10px;
   font-size: 14.5px;
   line-height: 1.6;
   color: #7a5b12;
@@ -398,7 +385,7 @@ h2 {
 }
 
 .mterm {
-  font-size: 14px;
+  font-size: 13.5px;
   color: #7c8797;
   font-weight: 500;
 }
@@ -415,7 +402,7 @@ h2 {
 
 .field > em {
   font-style: normal;
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--faint);
   font-family: var(--sans);
 }
@@ -482,7 +469,7 @@ h2 {
   margin-top: 10px;
   padding: 10px;
   background: var(--panel2);
-  border-radius: 9px;
+  border-radius: 10px;
   display: grid;
   gap: 8px;
 }
@@ -510,7 +497,7 @@ h2 {
   padding: 9px 11px;
   background: #fdeef2;
   border: 1px solid #f3c8d5;
-  border-radius: 9px;
+  border-radius: 10px;
   color: var(--it);
   font-size: 14.5px;
 }
@@ -520,14 +507,14 @@ h2 {
   padding: 8px 11px;
   background: #eef7f3;
   border: 1px solid #bfe3d5;
-  border-radius: 9px;
+  border-radius: 10px;
   color: #0a7a5a;
   font-size: 14px;
 }
 
 .note {
   color: var(--faint);
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 .small {
@@ -548,7 +535,7 @@ h2 {
 
 .more summary {
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 600;
   color: var(--dim);
   padding: 13px 0;
@@ -586,7 +573,7 @@ h2 {
 .btn.small {
   min-height: 32px;
   padding: 6px 11px;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
   width: 100%;
 }
@@ -738,7 +725,7 @@ input[type='range']::-moz-range-thumb {
   padding: 9px 11px;
   background: #eef7f3;
   border: 1px solid #bfe3d5;
-  border-radius: 9px;
+  border-radius: 10px;
   font-size: 14.5px;
   line-height: 1.55;
   color: #0a7a5a;
@@ -756,7 +743,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .say li {
-  font-size: 16px;
+  font-size: 14.5px;
   line-height: 1.65;
   color: var(--text);
 }
@@ -767,6 +754,20 @@ input[type='range']::-moz-range-thumb {
   font-size: 14.5px;
   line-height: 1.6;
   color: var(--dim);
+}
+
+.flowrest {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel2);
+  font-size: 13.5px;
+  color: var(--dim);
+}
+
+.flowrest b {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .loss {
@@ -794,7 +795,7 @@ input[type='range']::-moz-range-thumb {
 
 .vline {
   margin: 0;
-  font-size: 16px;
+  font-size: 15.5px;
   color: var(--dim);
 }
 
@@ -901,7 +902,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .mdesc {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--faint);
   line-height: 1.45;
 }
@@ -927,7 +928,7 @@ input[type='range']::-moz-range-thumb {
 .check em {
   font-style: normal;
   color: var(--faint);
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 /* ── 현금흐름 ─────────────────────────────────────── */
@@ -941,7 +942,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .flowrow > span {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--faint);
 }
 
@@ -974,15 +975,6 @@ input[type='range']::-moz-range-thumb {
   color: var(--dim);
 }
 
-.flowtotal {
-  border-top: 1px solid var(--hair);
-  margin-top: 10px;
-  padding-top: 9px;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 15px;
-}
 
 .flowtotal b {
   font-size: 19px;
@@ -1008,7 +1000,7 @@ input[type='range']::-moz-range-thumb {
 
 .cnote {
   margin: 9px 0 0;
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.5;
   color: var(--dim);
 }
@@ -1027,11 +1019,6 @@ input[type='range']::-moz-range-thumb {
 
 /* ── 요약 ─────────────────────────────────────────── */
 
-.sums {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
 
 @media (min-width: 400px) {
   .sums {
@@ -1039,16 +1026,6 @@ input[type='range']::-moz-range-thumb {
   }
 }
 
-.sum {
-  background: var(--paper);
-  border: 1px solid var(--hair);
-  border-radius: 9px;
-  padding: 9px 11px;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 6px;
-}
 
 @media (min-width: 400px) {
   .sum {
@@ -1057,15 +1034,7 @@ input[type='range']::-moz-range-thumb {
   }
 }
 
-.sum span {
-  font-size: 14px;
-  color: var(--faint);
-}
 
-.sum b {
-  font-size: 16px;
-  font-weight: 600;
-}
 
 /* ── 표 ───────────────────────────────────────────── */
 
@@ -1073,7 +1042,7 @@ input[type='range']::-moz-range-thumb {
   max-height: 380px;
   overflow: auto;
   border: 1px solid var(--hair);
-  border-radius: 9px;
+  border-radius: 10px;
   background: var(--paper);
 }
 
@@ -1120,7 +1089,7 @@ tbody tr:last-child td {
 .legend {
   display: flex;
   gap: 12px;
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--faint);
   margin: 0 0 8px;
 }
@@ -1161,7 +1130,7 @@ tbody tr:last-child td {
   border: 1px solid var(--pr);
   background: var(--pr);
   color: #fff;
-  border-radius: 9px;
+  border-radius: 10px;
   padding: 9px 14px;
   font: inherit;
   font-size: 15px;
@@ -1190,7 +1159,7 @@ tbody tr:last-child td {
 
 .foot p {
   margin: 0 0 5px;
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--faint);
 }
 
