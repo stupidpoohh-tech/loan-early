@@ -1,7 +1,8 @@
 /* ── v2 화면 — 화이트 톤 재설계 ─────────────────────────────────
-   밝은 회백색 바탕 위에 흰 카드를 띄우는 구성입니다.
-   v1은 모든 글자가 16px이었지만, v2는 결론 숫자(32px) → 본문(15px)
-   → 보조 설명(13px)의 위계를 세워 시선이 결론으로 먼저 가게 합니다.
+   연회색 바탕(#f2f4f6) 위에 테두리 없는 흰 카드를 얹는 구성입니다.
+   포인트 색은 파랑 하나만 씁니다 — 라벨·링크·버튼·이득이 파랑,
+   손실·이자만 빨강, 나머지는 전부 무채색입니다.
+   결론 숫자는 검정 고딕 볼드로 화면에서 가장 큽니다(최대 38px).
    입력칸만은 16px을 유지합니다 — iOS가 그 아래 크기에서 화면을 확대합니다. */
 
 /* 숫자용 자체 호스팅 폰트. 외부 요청이 없어야 "브라우저 안에서만 계산" 이 사실이 됩니다. */
@@ -23,24 +24,23 @@
 }
 
 :root {
-  --bg: #f7f8fa; /* 페이지 바탕 — 카드가 떠 보이는 밝은 회백색 */
-  --paper: #ffffff; /* 카드·입력 표면 */
-  --well: #f4f5f7; /* 입력칸 우물 — 테두리 대신 면으로 구분합니다 */
-  --panel2: #eef0f4;
-  --hair: #e7eaef;
+  --bg: #f2f4f6; /* 페이지 바탕 */
+  --paper: #ffffff; /* 카드 표면 */
+  --well: #f5f6f8; /* 카드 안 인셋 — 입력칸·요약 박스 */
+  --panel2: #eef0f3; /* 토글 트랙·슬라이더 트랙 */
+  --hair: #e9ecef; /* 구분선 */
   --text: #191f28;
   --dim: #4e5968;
   --faint: #8b95a1;
-  --ghost: #b6bec8;
-  --pr: #0e9b72; /* 원금·이득 */
-  --pr-deep: #0b7f5e;
-  --pr-soft: #ecf8f3;
-  --pr-line: #d3ecdf;
-  --it: #c42553; /* 이자·손실 */
-  --it-soft: #fdf1f5;
-  --it-line: #f5cfdb;
-  --ring: rgba(14, 155, 114, 0.13);
-  --shadow-card: 0 1px 2px rgba(25, 31, 40, 0.03), 0 6px 20px rgba(25, 31, 40, 0.05);
+  --ghost: #b0b8c1;
+  --pr: #3182f6; /* 포인트·원금·이득 */
+  --pr-deep: #1b64da;
+  --pr-soft: #eff5fd;
+  --pr-line: #d6e5fb;
+  --it: #e5303e; /* 이자·손실 */
+  --it-soft: #fdf0f1;
+  --it-line: #f8d2d6;
+  --ring: rgba(49, 130, 246, 0.15);
 
   /* 한글 본문은 설치된 폰트를 먼저 쓰고 시스템 스택으로 내려갑니다 */
   --sans: 'IBM Plex Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
@@ -89,9 +89,10 @@ body {
 .wrap {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px 16px 64px;
+  padding: 16px 14px 64px;
 }
 
+/* 표·입력칸의 숫자만 고정폭입니다. 화면의 큰 숫자는 본문과 같은 고딕 볼드로 갑니다. */
 .mono,
 input,
 select,
@@ -104,44 +105,43 @@ table {
 h1,
 h2 {
   margin: 0;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 h1 {
   font-weight: 800;
-  font-size: 21px;
-  letter-spacing: -0.02em;
+  font-size: 17px;
+  letter-spacing: -0.01em;
 }
 
 h2 {
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.01em;
   margin-bottom: 14px;
 }
 
 .head {
-  padding: 0 4px 16px;
+  padding: 2px 6px 12px;
 }
 
 .lede {
-  margin: 6px 0 0;
-  color: var(--dim);
-  font-size: 15px;
+  margin: 3px 0 0;
+  color: var(--faint);
+  font-size: 14px;
 }
 
 .lede b {
-  color: var(--text);
-  font-weight: 700;
+  color: var(--dim);
+  font-weight: 600;
 }
 
 .card {
   background: var(--paper);
-  border: 1px solid var(--hair);
-  border-radius: 20px;
+  border: 1px solid #eceef1;
+  border-radius: 18px;
   padding: 20px 18px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-card);
+  margin-bottom: 12px;
+  box-shadow: 0 1px 2px rgba(25, 31, 40, 0.02);
 }
 
 /* ── 입력 ─────────────────────────────────────────── */
@@ -167,7 +167,7 @@ h2 {
 }
 
 /* 테두리 상자 대신 면으로 구분하는 입력 우물.
-   초점이 들어오면 흰 바탕 + 초록 테두리로 "지금 여기" 를 보여줍니다. */
+   초점이 들어오면 흰 바탕 + 파란 링으로 "지금 여기" 를 보여줍니다. */
 .field {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -322,6 +322,7 @@ h2 {
 }
 
 .lbtext {
+  font-family: var(--sans);
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
@@ -351,7 +352,7 @@ h2 {
 }
 
 .loanline b {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: var(--dim);
@@ -492,9 +493,11 @@ h2 {
 
 .sliderhead > b {
   margin-left: auto;
+  font-family: var(--sans);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .sliderhead > em {
@@ -607,7 +610,8 @@ input[type='range']::-moz-range-thumb {
   border-radius: 999px;
   padding: 8px 15px;
   font-size: 14px;
-  font-family: var(--mono);
+  font-family: var(--sans);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   min-height: 40px;
@@ -645,8 +649,13 @@ input[type='range']::-moz-range-thumb {
   color: var(--pr-deep);
 }
 
+.gain b {
+  color: inherit;
+}
+
 .gain .linkish {
   margin-left: 2px;
+  color: var(--pr-deep);
 }
 
 /* ── 방식 토글 ────────────────────────────────────── */
@@ -666,7 +675,7 @@ input[type='range']::-moz-range-thumb {
   gap: 1px;
   justify-items: center;
   padding: 9px 6px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 11px;
   background: transparent;
   font: inherit;
@@ -677,8 +686,9 @@ input[type='range']::-moz-range-thumb {
 
 .segbtn[aria-checked='true'] {
   background: var(--paper);
+  border-color: var(--hair);
   color: var(--text);
-  box-shadow: 0 1px 5px rgba(25, 31, 40, 0.12);
+  box-shadow: 0 1px 4px rgba(25, 31, 40, 0.08);
 }
 
 .mname {
@@ -687,11 +697,13 @@ input[type='range']::-moz-range-thumb {
 }
 
 .mnet {
+  font-family: var(--sans);
   font-size: 15px;
   font-weight: 700;
   color: var(--pr);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .mnet.neg {
@@ -724,53 +736,51 @@ input[type='range']::-moz-range-thumb {
 
 /* ── 결론 ─────────────────────────────────────────── */
 
-/* 컨트롤 바로 아래 붙은 '답' 패널 — 화면에서 유일하게 색을 가진 면입니다 */
+/* 색 배경 없이, 파란 라벨 → 큰 검정 숫자 → 회색 인셋 박스 순서로 읽히는 히어로입니다 */
 .verdict {
-  margin-top: 18px;
-  padding: 16px 16px 14px;
-  background: var(--pr-soft);
-  border: 1px solid var(--pr-line);
-  border-radius: 16px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hair);
   text-align: left;
 }
 
 .vline {
   margin: 0;
-  font-size: 15px;
-  color: var(--dim);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pr-deep);
 }
 
 .vline b {
-  color: var(--text);
-  font-weight: 700;
-  font-family: var(--mono);
+  color: inherit;
+  font-weight: 800;
+  font-family: var(--sans);
   font-variant-numeric: tabular-nums;
 }
 
 .netrow {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
   margin-top: 8px;
 }
 
 .vlabel {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--dim);
-  flex: none;
+  color: var(--faint);
 }
 
 .big {
   margin: 0;
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: clamp(27px, 8.6vw, 34px);
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  color: var(--pr);
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: clamp(30px, 9vw, 38px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -805,39 +815,40 @@ input[type='range']::-moz-range-thumb {
   color: var(--dim);
 }
 
-/* 나감·돌아옴을 한 줄 분할로 — 막대 그래프 없이 곡선이 흐름을 보여줍니다 */
+/* 나감·돌아옴 — 라벨 왼쪽, 금액 오른쪽의 인셋 요약 박스 */
 .inout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin: 10px 0 12px;
-  border: 1px solid var(--pr-line);
-  border-radius: 12px;
-  background: var(--paper);
+  grid-template-columns: 1fr;
+  margin: 12px 0 0;
+  background: var(--well);
+  border-radius: 14px;
   overflow: hidden;
 }
 
 .io {
-  display: grid;
-  gap: 0;
-  padding: 8px 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
 }
 
 .io + .io {
-  border-left: 1px solid var(--hair);
+  border-top: 1px solid var(--hair);
 }
 
 .io span {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--faint);
 }
 
 .io b {
-  /* 반 폭 칸에 "+15,279,713원" 이 들어가야 합니다 */
-  font-size: 15px;
+  font-family: var(--sans);
+  font-size: 14px;
   font-weight: 700;
-  color: var(--pr);
+  color: var(--text);
   white-space: nowrap;
-  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .io b.neg {
@@ -854,10 +865,9 @@ input[type='range']::-moz-range-thumb {
 
 .verdict #curve {
   margin-top: 6px;
-  padding: 8px;
-  background: var(--paper);
-  border: 1px solid var(--pr-line);
-  border-radius: 12px;
+  padding: 10px;
+  background: var(--well);
+  border-radius: 14px;
 }
 
 .verdict #curve:empty {
@@ -865,7 +875,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .cnote {
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   font-size: 13px;
   line-height: 1.55;
   color: var(--dim);
@@ -879,7 +889,8 @@ input[type='range']::-moz-range-thumb {
 }
 
 .cnote b {
-  font-family: var(--mono);
+  font-family: var(--sans);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1016,7 +1027,7 @@ tbody tr:last-child td {
   border: 0;
   border-top: 1px solid var(--hair);
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -6px 24px rgba(25, 31, 40, 0.1);
+  box-shadow: 0 -6px 24px rgba(25, 31, 40, 0.08);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -1052,11 +1063,13 @@ tbody tr:last-child td {
 
 .sbnet {
   margin-left: auto;
+  font-family: var(--sans);
   font-size: 18px;
-  font-weight: 700;
-  color: var(--pr);
+  font-weight: 800;
+  color: var(--text);
   white-space: nowrap;
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .sbnet.neg {
@@ -1067,7 +1080,7 @@ tbody tr:last-child td {
   flex: none;
   font-size: 13px;
   font-weight: 600;
-  color: var(--faint);
+  color: var(--pr);
   border-left: 1px solid var(--hair);
   padding-left: 10px;
 }
@@ -1132,7 +1145,7 @@ tbody tr:last-child td {
 
 .foot {
   margin-top: 24px;
-  padding: 0 4px;
+  padding: 0 6px;
 }
 
 .foot p {
