@@ -244,6 +244,11 @@ const ui = {
   feeRate: el<HTMLInputElement>('feeRate'),
   feeMode: el<HTMLSelectElement>('feeMode'),
   prorataOnly: el<HTMLDivElement>('prorataOnly'),
+  feeOpen: el<HTMLButtonElement>('feeOpen'),
+  feeText: el<HTMLElement>('feeText'),
+  feeDialog: el<HTMLDialogElement>('feeDialog'),
+  feeClose: el<HTMLButtonElement>('feeClose'),
+  feeDone: el<HTMLButtonElement>('feeDone'),
   openDate: el<HTMLInputElement>('openDate'),
   maturity: el<HTMLInputElement>('maturity'),
   feeYears: el<HTMLInputElement>('feeYears'),
@@ -355,17 +360,20 @@ function readInputs(): void {
 
 const CHIPS = [100_000, 500_000, 1_000_000, 3_000_000, 5_000_000, 10_000_000];
 
+/**
+ * 칩은 더하기입니다 — 100만을 누르고 300만을 누르면 400만이 됩니다.
+ * 한 번에 정확한 금액을 고르는 사람보다 얹어 가며 맞추는 사람이 많습니다.
+ * 남은 잔액을 넘길 칩은 아예 그리지 않고, 되돌릴 [지우기]를 끝에 답니다.
+ */
 function renderChips(balanceAt: number): void {
-  const values = CHIPS.filter((v) => v < balanceAt);
-  const html = values
-    .map(
-      (v) =>
-        `<button type="button" class="chip" data-v="${v}" aria-pressed="${state.amount === v}">${short(v)}</button>`,
-    )
+  const room = Math.max(0, balanceAt - state.amount);
+  const adds = CHIPS.filter((v) => v <= room)
+    .map((v) => `<button type="button" class="chip" data-add="${v}">+${short(v)}</button>`)
     .join('');
-  ui.amountChips.innerHTML =
-    html +
-    `<button type="button" class="chip" data-v="${balanceAt}" aria-pressed="${state.amount >= balanceAt}">전액</button>`;
+  const all = `<button type="button" class="chip" data-set="${balanceAt}" aria-pressed="${state.amount >= balanceAt}">전액</button>`;
+  const clear =
+    state.amount > 0 ? '<button type="button" class="chip clear" data-set="0">지우기</button>' : '';
+  ui.amountChips.innerHTML = adds + all + clear;
 }
 
 function renderCurve(s: Scenario, cfg: LoanConfig): void {
@@ -448,6 +456,18 @@ function renderTable(s: Scenario, cfg: LoanConfig, base: Row[]): void {
     `<svg viewBox="0 0 ${n} 100" preserveAspectRatio="none" role="img" aria-label="회차별 원금과 이자 구성">${stack}</svg>`;
 }
 
+/**
+ * 대출 정보가 없으면 잔액을 모르니 금액 조작부를 그릴 수 없습니다.
+ * 이때 슬라이더를 그냥 두면 value 가 비어 있어 브라우저가 min·max의
+ * 한가운데(1,500만)에 손잡이를 놓습니다 — 0원인데 반쯤 채워진 화면이 됩니다.
+ */
+function clearAmountUI(): void {
+  ui.amount.value = String(Math.max(0, state.amount));
+  if (document.activeElement !== ui.amountNum) setMoney(ui.amountNum, state.amount);
+  ui.delay.value = String(Math.max(0, state.delayMonths));
+  ui.amountChips.innerHTML = '';
+}
+
 function clearResults(message: string): void {
   ui.verdict.textContent = message;
   ui.netBig.textContent = '';
@@ -518,6 +538,10 @@ function render(): void {
   const a = analyze(cfg);
 
   ui.prorataOnly.hidden = cfg.feeMode !== 'prorata';
+  ui.feeText.textContent =
+    `${cfg.feeRate}%` +
+    (cfg.feeYears > 0 ? ` · ${cfg.feeYears}년` : ' · 기간 제한 없음') +
+    (cfg.feeMode === 'prorata' ? ' · 슬라이딩' : '');
   renderLoanLine(a);
 
   // 슬라이딩 수수료는 만기일이 틀리면 조용히 틀린 답을 냅니다.
@@ -534,6 +558,7 @@ function render(): void {
     // 아직 아무것도 넣지 않은 첫 화면에 경고를 띄울 이유는 없습니다.
     if (isBlank(state)) {
       ui.inputmsg.hidden = true;
+      clearAmountUI();
       clearResults('위 세 칸을 채우시면 결과가 바로 나옵니다.');
       return;
     }
@@ -545,6 +570,7 @@ function render(): void {
           : miss
             ? `${miss}을 입력해 주세요.`
             : '세 칸을 모두 0보다 큰 값으로 입력해 주세요.';
+    clearAmountUI();
     clearResults('대출 정보를 먼저 채워 주세요.');
     return;
   }
@@ -754,7 +780,11 @@ ui.delay.addEventListener('input', () => {
 ui.amountChips.addEventListener('click', (e) => {
   const target = (e.target as HTMLElement).closest('.chip') as HTMLElement | null;
   if (!target) return;
-  state.amount = Number(target.dataset['v'] ?? 0);
+  const add = target.dataset['add'];
+  const set = target.dataset['set'];
+  // 상한 처리는 render() 가 잔액 기준으로 한 번에 합니다
+  if (add !== undefined) state.amount += Number(add);
+  else if (set !== undefined) state.amount = Number(set);
   render();
 });
 
@@ -792,6 +822,32 @@ ui.deriveApply.addEventListener('click', () => {
   render();
 });
 
+// ── 수수료 설정 팝업 ───────────────────────────────────────────
+// 값은 고치는 즉시 뒤 화면에 반영되므로 '확인'은 닫기와 같습니다.
+
+function openFee(): void {
+  ui.feeDialog.showModal();
+  document.documentElement.classList.add('sheetopen');
+}
+
+function closeFee(): void {
+  ui.feeDialog.close();
+}
+
+ui.feeOpen.addEventListener('click', openFee);
+ui.feeClose.addEventListener('click', closeFee);
+ui.feeDone.addEventListener('click', closeFee);
+
+// 바깥(백드롭)을 누르면 닫습니다 — 팝업 자신이 클릭 대상일 때만 바깥입니다
+ui.feeDialog.addEventListener('click', (e) => {
+  if (e.target === ui.feeDialog) closeFee();
+});
+
+// Esc 로 닫히는 경우까지 한곳에서 뒷정리합니다
+ui.feeDialog.addEventListener('close', () => {
+  document.documentElement.classList.remove('sheetopen');
+});
+
 ui.fillMaturity.addEventListener('click', () => {
   const d = ui.fillMaturity.dataset['d'];
   if (!d) return;
@@ -827,8 +883,10 @@ ui.reset.addEventListener('click', () => {
   const clearing = !isBlank(state);
   state = clearing ? blank() : example();
   editing = clearing; // 지운 뒤에는 다시 입력하는 중이므로, 다 채워져도 스스로 접지 않습니다
-  if (clearing) forget();
-  else touched = true; // 예시를 넣은 것도 사용자의 선택이라 남겨 둡니다
+  // 예시는 구경거리지 내 값이 아닙니다. 저장해 두면 다음 방문에 남의 숫자로
+  // 화면이 차 있고, 그게 내가 넣은 값인지 예시인지 구분되지 않습니다.
+  touched = false;
+  forget();
   history.replaceState(null, '', location.pathname + location.search);
   ui.deriveBox.hidden = true;
   ui.deriveToggle.textContent = '남은 회차로 계산';

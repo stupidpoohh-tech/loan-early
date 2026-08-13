@@ -359,6 +359,173 @@ h2 {
   color: var(--dim);
 }
 
+/* ── 수수료 한 줄 + 팝업 ──────────────────────────── */
+
+.feebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: var(--well);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.feebar:hover {
+  border-color: var(--hair);
+}
+
+.fblabel {
+  font-size: 13px;
+  color: var(--faint);
+  flex: none;
+}
+
+.fbvalue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fbedit {
+  margin-left: auto;
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pr);
+  background: var(--paper);
+  border: 1px solid var(--pr-line);
+  border-radius: 999px;
+  padding: 4px 11px;
+}
+
+/* 팝업은 데스크톱에서 가운데, 모바일에서 아래에서 올라오는 시트입니다 */
+.sheet {
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  width: min(520px, calc(100% - 28px));
+  max-height: 86vh;
+  background: var(--paper);
+  color: var(--text);
+  box-shadow: 0 18px 50px rgba(25, 31, 40, 0.22);
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.sheet::backdrop {
+  background: rgba(25, 31, 40, 0.42);
+}
+
+/* display 는 [open] 에만 겁니다. 기본 선택자에 두면 브라우저의
+   `dialog:not([open]) { display: none }` 을 덮어써서, 닫힌 팝업이
+   페이지 맨 아래에 그대로 펼쳐집니다. */
+.sheet[open] {
+  display: flex;
+  animation: sheetin 0.16s ease-out;
+}
+
+@keyframes sheetin {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* 손이 닿는 화면에서는 아래에서 올라오는 편이 잡기 쉽습니다 */
+@media (max-width: 480px) {
+  .sheet {
+    width: 100%;
+    max-width: 100%;
+    margin: auto auto 0;
+    border-radius: 20px 20px 0 0;
+    max-height: 88vh;
+  }
+
+  @keyframes sheetin {
+    from {
+      transform: translateY(100%);
+    }
+  }
+}
+
+/* 팝업이 떠 있는 동안 뒤 화면이 따라 움직이면 어느 쪽을 만지는지 흐려집니다 */
+.sheetopen,
+.sheetopen body {
+  overflow: hidden;
+}
+
+.sheethead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 16px 10px;
+  flex: none;
+}
+
+.sheethead h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.sheetclose {
+  margin-left: auto;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--well);
+  color: var(--dim);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sheetclose:hover {
+  background: var(--panel2);
+}
+
+.sheetbody {
+  padding: 0 16px 4px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+}
+
+.sheetlede {
+  margin: 0 0 12px;
+}
+
+.sheetbody .grid2 {
+  margin-bottom: 12px;
+}
+
+.sheetfoot {
+  flex: none;
+  padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--hair);
+  background: var(--paper);
+}
+
+.sheetfoot .btn {
+  width: 100%;
+}
+
 /* 도움말은 필요한 사람만 펴 보면 됩니다 */
 .tip {
   margin-top: 8px;
@@ -626,6 +793,13 @@ input[type='range']::-moz-range-thumb {
   border-color: var(--pr);
   color: #fff;
   font-weight: 600;
+}
+
+/* 되돌리는 칩은 더하는 칩과 같은 무게로 보이면 안 됩니다 */
+.chip.clear {
+  background: transparent;
+  border-style: dashed;
+  color: var(--faint);
 }
 
 .loss {

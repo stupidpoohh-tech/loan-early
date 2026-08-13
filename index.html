@@ -103,6 +103,14 @@
           <button type="button" class="btn done" id="loanDone" hidden>다 넣었어요 · 접기</button>
         </div>
 
+        <!-- 수수료는 결과를 좌우하는데 값을 아는 사람이 적습니다.
+             자리는 위쪽에 두되, 칸은 팝업 안에 넣어 첫 화면을 어지럽히지 않습니다. -->
+        <button type="button" class="feebar" id="feeOpen" aria-haspopup="dialog">
+          <span class="fblabel">중도상환수수료</span>
+          <span class="fbvalue" id="feeText"></span>
+          <span class="fbedit">설정</span>
+        </button>
+
 
         <!-- ③ 상환 조건 + ④ 결론 — 슬라이더와 결과가 한 화면에 같이 보이도록 붙여 둡니다 -->
         <div class="sliderrow">
@@ -118,7 +126,7 @@
             />
             <em>원</em>
           </div>
-          <input id="amount" type="range" min="0" max="30000000" step="10000" aria-label="이번에 더 갚을 돈 조절" />
+          <input id="amount" type="range" min="0" max="30000000" step="10000" value="0" aria-label="이번에 더 갚을 돈 조절" />
           <div class="chips" id="amountChips"></div>
         </div>
 
@@ -205,57 +213,6 @@
         </p>
         </details>
         <details class="more">
-          <summary>수수료 설정 (모르시면 그냥 두세요)</summary>
-          <div class="grid2">
-            <label class="field">
-              <span>다음에 돈 나가는 날</span>
-              <input id="nextDate" type="date" />
-            </label>
-            <label class="field">
-              <span>다음이 몇 번째인가요</span>
-              <input id="nextNo" type="number" inputmode="numeric" min="1" step="1" />
-              <em>회</em>
-            </label>
-            <label class="field">
-              <span>미리 갚을 때 내는 수수료 <i>중도상환수수료율</i></span>
-              <input id="feeRate" type="number" inputmode="decimal" min="0" max="10" step="0.0001" />
-              <em>%</em>
-            </label>
-            <label class="field">
-              <span>수수료 계산 방식</span>
-              <select id="feeMode">
-                <option value="flat">정률 — 상환원금 × 요율</option>
-                <option value="prorata">슬라이딩 — 남은 기간에 비례</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>대출 시작한 날</span>
-              <input id="openDate" type="date" />
-            </label>
-            <label class="field">
-              <span>수수료 내는 기간 <i>부과기간</i></span>
-              <input id="feeYears" type="number" inputmode="decimal" min="0" max="10" step="0.5" />
-              <em>년</em>
-            </label>
-          </div>
-          <div class="grid2" id="prorataOnly" hidden>
-            <label class="field">
-              <span>대출 끝나는 날</span>
-              <input id="maturity" type="date" />
-            </label>
-            <div class="fillrow">
-              <button type="button" class="btn ghost small" id="fillMaturity">
-                계산된 만기 넣기 <span class="mono" id="calcMaturity"></span>
-              </button>
-            </div>
-          </div>
-          <p class="note small">
-            수수료율과 산정방식은 대출 약정서나 금융사 앱의 상세 화면에 적혀 있습니다.
-            대부분의 대출은 <b>받은 날로부터 3년이 지나면 수수료가 없어집니다</b> — 그래서
-            대출 시작한 날을 맞게 넣을수록 "언제 갚을까"의 답이 정확해집니다.
-          </p>
-        </details>
-        <details class="more">
           <summary>매달 얼마씩 내는지 보기</summary>
           <div id="stack"></div>
           <div class="tablewrap" id="tableWrap"></div>
@@ -338,6 +295,69 @@
         </details>
       </footer>
     </div>
+
+    <!-- 수수료 설정 팝업 — 위쪽 [설정] 버튼으로 엽니다.
+         Esc·바깥 클릭으로 닫히고, 값은 고치는 즉시 뒤 화면에 반영됩니다. -->
+    <dialog class="sheet" id="feeDialog" aria-labelledby="feeTitle">
+      <div class="sheethead">
+        <h2 id="feeTitle">수수료 설정</h2>
+        <button type="button" class="sheetclose" id="feeClose" aria-label="닫기">✕</button>
+      </div>
+      <div class="sheetbody">
+        <p class="note small sheetlede">모르시면 그냥 두셔도 됩니다. 기본값은 국내 가계대출 관행값입니다.</p>
+        <div class="grid2">
+          <label class="field">
+            <span>다음에 돈 나가는 날</span>
+            <input id="nextDate" type="date" />
+          </label>
+          <label class="field">
+            <span>다음이 몇 번째인가요</span>
+            <input id="nextNo" type="number" inputmode="numeric" min="1" step="1" />
+            <em>회</em>
+          </label>
+          <label class="field">
+            <span>미리 갚을 때 내는 수수료 <i>중도상환수수료율</i></span>
+            <input id="feeRate" type="number" inputmode="decimal" min="0" max="10" step="0.0001" />
+            <em>%</em>
+          </label>
+          <label class="field">
+            <span>수수료 계산 방식</span>
+            <select id="feeMode">
+              <option value="flat">정률 — 상환원금 × 요율</option>
+              <option value="prorata">슬라이딩 — 남은 기간에 비례</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>대출 시작한 날</span>
+            <input id="openDate" type="date" />
+          </label>
+          <label class="field">
+            <span>수수료 내는 기간 <i>부과기간</i></span>
+            <input id="feeYears" type="number" inputmode="decimal" min="0" max="10" step="0.5" />
+            <em>년</em>
+          </label>
+        </div>
+        <div class="grid2" id="prorataOnly" hidden>
+          <label class="field">
+            <span>대출 끝나는 날</span>
+            <input id="maturity" type="date" />
+          </label>
+          <div class="fillrow">
+            <button type="button" class="btn ghost small" id="fillMaturity">
+              계산된 만기 넣기 <span class="mono" id="calcMaturity"></span>
+            </button>
+          </div>
+        </div>
+        <p class="note small">
+          수수료율과 산정방식은 대출 약정서나 금융사 앱의 상세 화면에 적혀 있습니다.
+          대부분의 대출은 <b>받은 날로부터 3년이 지나면 수수료가 없어집니다</b> — 그래서
+          대출 시작한 날을 맞게 넣을수록 "언제 갚을까"의 답이 정확해집니다.
+        </p>
+      </div>
+      <div class="sheetfoot">
+        <button type="button" class="btn" id="feeDone">확인</button>
+      </div>
+    </dialog>
 
     <!-- 슬라이더를 만지는 동안 결과가 화면 밖에 있으면 조작과 반응이 끊깁니다.
          결과가 안 보일 때만 아래에 붙어 따라다닙니다. -->
