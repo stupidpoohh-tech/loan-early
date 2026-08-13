@@ -1266,6 +1266,70 @@ tbody tr:last-child td {
   }
 }
 
+/* ── 서비스 더보기 ────────────────────────────────── */
+
+.svc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--well);
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.svc:hover {
+  background: var(--paper);
+  border-color: var(--pr-line);
+}
+
+.svcicon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--pr-soft);
+  color: var(--pr);
+}
+
+.svctext {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.svctext b {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.svctext em {
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+/* 바깥으로 나간다는 표시 — 접힘 삼각형과 같은 방식으로 그립니다 */
+.svcgo {
+  flex: none;
+  margin-left: auto;
+  margin-right: 4px;
+  width: 8px;
+  height: 8px;
+  border-top: 1.8px solid var(--ghost);
+  border-right: 1.8px solid var(--ghost);
+  transform: rotate(45deg);
+}
+
 /* ── 도구 · 푸터 ──────────────────────────────────── */
 
 .tools {
