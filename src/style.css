@@ -1429,6 +1429,7 @@ tbody tr:last-child td {
 .foot p.credit {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin: 16px 0 0;
   padding-top: 14px;
