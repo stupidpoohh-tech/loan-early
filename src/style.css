@@ -1425,6 +1425,40 @@ tbody tr:last-child td {
   font-weight: 500;
 }
 
+/* 제작자 표시 — 접힘 설명들 아래, 화면 맨 끝에 조용히 붙습니다 */
+.foot p.credit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair);
+}
+
+.credit span {
+  font-size: 12px;
+  color: var(--ghost);
+}
+
+.creditlink {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  color: var(--faint);
+  background: var(--well);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.creditlink:hover {
+  border-color: var(--pr-line);
+  color: var(--pr);
+}
+
 [hidden] {
   display: none !important;
 }
