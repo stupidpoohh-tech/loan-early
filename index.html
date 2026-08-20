@@ -280,6 +280,12 @@
         <button type="button" class="btn" id="copyLink">이 설정 링크 복사</button>
         <button type="button" class="btn ghost" id="reset">예시로 채워보기</button>
         <span class="toast" id="toast" hidden></span>
+        <!-- 클립보드가 막힌 웹뷰용. 주소창에는 대출 정보를 쓰지 않으므로
+             복사가 실패하면 여기로 주소를 꺼내 줍니다. -->
+        <label class="copyfall" id="copyFall" hidden>
+          <span>자동 복사가 막혀 있습니다. 아래 주소를 길게 눌러 복사해 주세요.</span>
+          <input id="copyUrl" type="text" readonly />
+        </label>
       </section>
 
       <!-- ⑪ 서비스 더보기 — 이 화면에서 바깥으로 나가는 유일한 링크입니다.
@@ -311,6 +317,11 @@
             계산은 브라우저 안에서만 이루어집니다. 다음에 다시 오셔도 이어서 보실 수 있도록
             입력하신 값을 <b>이 브라우저에만</b> 저장하며, 어디로도 전송하지 않습니다.
             지우시려면 [입력값 지우기]를 누르시거나 브라우저의 사이트 데이터를 삭제하시면 됩니다.
+          </p>
+          <p class="prose">
+            몇 분이 쓰시는지 세기 위해 <b>Cloudflare Web Analytics</b>만 사용합니다.
+            쿠키를 심지 않고 개인을 식별하지 않으며, <b>입력하신 대출 정보는 보내지 않습니다</b>.
+            링크로 받은 값도 읽는 즉시 주소창에서 지워, 주소에 대출 정보가 남지 않습니다.
           </p>
         </details>
       </footer>
@@ -388,5 +399,14 @@
     </button>
 
     <script type="module" src="/src/main.ts"></script>
+
+    <!-- Cloudflare Web Analytics — 쿠키 없음, 개인 식별 없음.
+         페이지 주소를 보내므로, 주소창에 대출 정보(해시)를 남기지 않는 것이 전제입니다.
+         main.ts 의 dropHash() 가 그 일을 합니다. -->
+    <script
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "b37c2ef4d6324d2597c2178726d06a14"}'
+    ></script>
   </body>
 </html>

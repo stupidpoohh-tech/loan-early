@@ -163,9 +163,23 @@ function unpack(raw: string): State | null {
 type Origin = 'default' | 'link' | 'saved';
 let origin: Origin = 'default';
 
+/**
+ * 해시를 읽고 나면 주소창에서 즉시 지웁니다.
+ *
+ * 해시에는 잔액·금리·월납입액·대출 시작일이 base64로 들어 있고,
+ * 방문자 수를 세는 스크립트는 페이지 주소를 그대로 보냅니다.
+ * 주소창에 남겨 두면 그 대출 정보가 통계와 함께 밖으로 나갑니다.
+ * 상태는 이미 메모리에 있으므로 지워도 화면은 그대로입니다.
+ */
+function dropHash(): void {
+  if (!location.hash) return;
+  history.replaceState(null, '', location.pathname + location.search);
+}
+
 function restore(): void {
   const hash = location.hash.replace(/^#/, '');
   const fromHash = hash ? unpack(hash) : null;
+  dropHash();
   if (fromHash) {
     state = fromHash;
     origin = 'link';
@@ -285,6 +299,8 @@ const ui = {
   stack: el<HTMLDivElement>('stack'),
   tableWrap: el<HTMLDivElement>('tableWrap'),
   copyLink: el<HTMLButtonElement>('copyLink'),
+  copyFall: el<HTMLLabelElement>('copyFall'),
+  copyUrl: el<HTMLInputElement>('copyUrl'),
   reset: el<HTMLButtonElement>('reset'),
   toast: el<HTMLElement>('toast'),
 };
@@ -866,16 +882,46 @@ function toast(msg: string): void {
   }, 2400);
 }
 
+/** 클립보드 API를 막아 둔 웹뷰가 있어 예비 경로를 하나 더 둡니다 */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    /* 아래 방법으로 한 번 더 시도합니다 */
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.top = '0';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch {
+    ok = false;
+  }
+  ta.remove();
+  return ok;
+}
+
 ui.copyLink.addEventListener('click', async () => {
   const url = `${location.origin}${location.pathname}${location.search}#${pack(state)}`;
-  history.replaceState(null, '', `#${pack(state)}`);
-  try {
-    await navigator.clipboard.writeText(url);
+  // 주소창에는 쓰지 않습니다 — 대출 정보가 담긴 주소가 남으면
+  // 방문자 수를 세는 스크립트가 그 값을 함께 보내게 됩니다.
+  if (await copyText(url)) {
+    ui.copyFall.hidden = true;
     toast('링크를 복사했습니다');
-  } catch {
-    // 클립보드를 못 쓰는 웹뷰가 있어 주소창 갱신으로 대체합니다
-    toast('주소창의 링크를 복사해 주세요');
+    return;
   }
+  // 복사가 막힌 환경에서는 주소를 꺼내 직접 복사하실 수 있게 합니다
+  ui.copyFall.hidden = false;
+  ui.copyUrl.value = url;
+  ui.copyUrl.select();
+  toast('아래 주소를 복사해 주세요');
 });
 
 // 비어 있으면 예시를 넣어 주고, 값이 있으면 지웁니다. 버튼 하나로 양쪽을 겸합니다.
@@ -888,6 +934,7 @@ ui.reset.addEventListener('click', () => {
   touched = false;
   forget();
   history.replaceState(null, '', location.pathname + location.search);
+  ui.copyFall.hidden = true;
   ui.deriveBox.hidden = true;
   ui.deriveToggle.textContent = '남은 회차로 계산';
   fillInputs();
@@ -900,6 +947,7 @@ ui.reset.addEventListener('click', () => {
 window.addEventListener('hashchange', () => {
   const hash = location.hash.replace(/^#/, '');
   const s = hash ? unpack(hash) : null;
+  dropHash(); // replaceState 는 hashchange 를 다시 일으키지 않아 되돌지 않습니다
   if (s) {
     state = s;
     editing = false;

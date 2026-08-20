@@ -1382,6 +1382,29 @@ tbody tr:last-child td {
   font-weight: 600;
 }
 
+/* 자동 복사가 막힌 환경에서만 펼쳐지는 주소 칸 */
+.copyfall {
+  flex: 1 0 100%;
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.copyfall span {
+  font-size: 13px;
+  color: var(--faint);
+}
+
+.copyfall input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--hair);
+  border-radius: 12px;
+  background: var(--well);
+  color: var(--dim);
+  font-size: 16px; /* iOS 확대 방지 */
+}
+
 .foot {
   margin-top: 24px;
   padding: 0 6px;
