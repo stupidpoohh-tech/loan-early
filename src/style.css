@@ -249,7 +249,7 @@ h2 {
 
 .field select {
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16px; /* 위 규칙과 같은 값이어야 합니다 — 16px 아래면 iOS 가 화면을 확대합니다 */
 }
 
 .field input::-webkit-outer-spin-button,
@@ -422,6 +422,12 @@ h2 {
   box-shadow: 0 18px 50px rgba(25, 31, 40, 0.22);
   overflow: hidden;
   flex-direction: column;
+}
+
+/* <dialog> 를 모르는 브라우저는 UA 기본 규칙(dialog:not([open]){display:none})도
+   없어서, 닫힌 팝업 내용이 푸터 아래에 그대로 펼쳐집니다. 직접 막습니다. */
+.sheet:not([open]) {
+  display: none;
 }
 
 .sheet::backdrop {

@@ -164,16 +164,40 @@ type Origin = 'default' | 'link' | 'saved';
 let origin: Origin = 'default';
 
 /**
+ * 주소를 고치다 실패해도 앱이 죽으면 안 됩니다.
+ * file:// 로 열거나 샌드박스 iframe 안이면 replaceState 가 SecurityError 를
+ * 던지는데, 이게 초기화 도중이면 화면이 통째로 안 그려집니다.
+ */
+function replaceUrl(data: unknown, url: string): void {
+  try {
+    history.replaceState(data, '', url);
+  } catch {
+    /* 주소를 못 고치는 환경이면 그대로 갑니다 */
+  }
+}
+
+/**
  * 해시를 읽고 나면 주소창에서 즉시 지웁니다.
  *
  * 해시에는 잔액·금리·월납입액·대출 시작일이 base64로 들어 있고,
  * 방문자 수를 세는 스크립트는 페이지 주소를 그대로 보냅니다.
  * 주소창에 남겨 두면 그 대출 정보가 통계와 함께 밖으로 나갑니다.
- * 상태는 이미 메모리에 있으므로 지워도 화면은 그대로입니다.
+ *
+ * 다만 그냥 버리면 공유 링크로 들어온 사람이 [서비스 더보기] 를 눌렀다가
+ * 뒤로 왔을 때 대출이 사라집니다(저장은 값을 만지기 전까지 하지 않으므로).
+ * 그래서 history.state 에 실어 둡니다 — 히스토리 항목에 남아 뒤로 가기에는
+ * 살아남고, 주소가 아니라서 통계로는 나가지 않습니다.
  */
 function dropHash(): void {
   if (!location.hash) return;
-  history.replaceState(null, '', location.pathname + location.search);
+  const packed = location.hash.replace(/^#/, '');
+  replaceUrl({ s: packed }, location.pathname + location.search);
+}
+
+/** 뒤로 가기로 돌아왔을 때 히스토리 항목에 실어 둔 값을 꺼냅니다 */
+function carriedState(): State | null {
+  const carried = (history.state as { s?: unknown } | null)?.s;
+  return typeof carried === 'string' && carried ? unpack(carried) : null;
 }
 
 function restore(): void {
@@ -182,6 +206,12 @@ function restore(): void {
   dropHash();
   if (fromHash) {
     state = fromHash;
+    origin = 'link';
+    return;
+  }
+  const fromHistory = carriedState();
+  if (fromHistory) {
+    state = fromHistory;
     origin = 'link';
     return;
   }
@@ -381,6 +411,14 @@ const CHIPS = [100_000, 500_000, 1_000_000, 3_000_000, 5_000_000, 10_000_000];
  * 한 번에 정확한 금액을 고르는 사람보다 얹어 가며 맞추는 사람이 많습니다.
  * 남은 잔액을 넘길 칩은 아예 그리지 않고, 되돌릴 [지우기]를 끝에 답니다.
  */
+/** 칩을 식별하는 값 — 다시 그린 뒤 같은 칩을 찾아 초점을 돌려주는 데 씁니다 */
+function chipKey(el: HTMLElement): string {
+  return `${el.dataset['add'] ?? ''}|${el.dataset['set'] ?? ''}`;
+}
+
+/** 마지막으로 그린 칩 HTML. 같으면 다시 그리지 않습니다 */
+let chipsHtml = '';
+
 function renderChips(balanceAt: number): void {
   const room = Math.max(0, balanceAt - state.amount);
   const adds = CHIPS.filter((v) => v <= room)
@@ -389,7 +427,24 @@ function renderChips(balanceAt: number): void {
   const all = `<button type="button" class="chip" data-set="${balanceAt}" aria-pressed="${state.amount >= balanceAt}">전액</button>`;
   const clear =
     state.amount > 0 ? '<button type="button" class="chip clear" data-set="0">지우기</button>' : '';
-  ui.amountChips.innerHTML = adds + all + clear;
+  const html = adds + all + clear;
+
+  // 칩을 연달아 눌러 금액을 쌓는 화면입니다. 매번 innerHTML 을 갈아끼우면
+  // 방금 누른 버튼이 사라져 키보드 초점이 문서 맨 앞으로 돌아갑니다.
+  if (html === chipsHtml) return;
+  chipsHtml = html;
+
+  const focused = (document.activeElement as HTMLElement | null)?.closest('.chip');
+  const key = focused ? chipKey(focused as HTMLElement) : null;
+  ui.amountChips.innerHTML = html;
+  if (key === null) return;
+
+  for (const chip of Array.from(ui.amountChips.children)) {
+    if (chipKey(chip as HTMLElement) === key) {
+      (chip as HTMLElement).focus();
+      return;
+    }
+  }
 }
 
 function renderCurve(s: Scenario, cfg: LoanConfig): void {
@@ -482,19 +537,39 @@ function clearAmountUI(): void {
   if (document.activeElement !== ui.amountNum) setMoney(ui.amountNum, state.amount);
   ui.delay.value = String(Math.max(0, state.delayMonths));
   ui.amountChips.innerHTML = '';
+  chipsHtml = ''; // 다음에 그릴 때 '같은 내용'으로 오해해 건너뛰지 않도록
 }
 
+/**
+ * 결과에서 나온 것은 하나도 남기지 않습니다.
+ * 하나라도 빠뜨리면 지워진 대출의 숫자가 화면에 남아, 방금 지운 값이
+ * 아직 살아 있는 것처럼 보입니다 — 시점 안내·지연 손해·금리 경고·
+ * 은행에 말할 문장·하단 요약 바가 모두 결과에서 나온 것들입니다.
+ */
 function clearResults(message: string): void {
   ui.verdict.textContent = message;
   ui.netBig.textContent = '';
+  ui.netBig.classList.remove('neg', 'bump');
   ui.ratioLine.textContent = '';
   ui.netTerm.textContent = '—';
   ui.netPay.textContent = '—';
+  ui.netTerm.classList.remove('neg');
+  ui.netPay.classList.remove('neg');
   ui.inout.hidden = true;
   ui.curve.innerHTML = '';
   ui.curveNote.textContent = '';
   ui.tableWrap.innerHTML = '';
   ui.stack.innerHTML = '';
+
+  ui.netLabel.hidden = true;
+  ui.ratewarn.hidden = true;
+  ui.stickybar.hidden = true;
+  ui.delayLoss.hidden = true;
+  ui.waitHint.hidden = true;
+  ui.delayOut.textContent = '';
+  ui.sayAmount.textContent = '';
+  ui.sayCompare.textContent = '';
+  ui.sayFee.textContent = '';
 }
 
 function renderLoanLine(a: Analysis): void {
@@ -552,6 +627,10 @@ function syncResetButton(): void {
 function render(): void {
   const cfg = state.cfg;
   const a = analyze(cfg);
+
+  // 값이 하나라도 바뀌면 꺼내 둔 복사용 주소는 낡은 값이 됩니다.
+  // 복사 버튼은 render() 를 부르지 않으므로, 눌러서 연 칸은 그대로 남습니다.
+  ui.copyFall.hidden = true;
 
   ui.prorataOnly.hidden = cfg.feeMode !== 'prorata';
   ui.feeText.textContent =
@@ -732,7 +811,7 @@ function render(): void {
       `→ 기간이 줄면 <b>${signed(term.net)}</b>, 월 납입금이 줄면 <b>${signed(pay.net)}</b>. ` +
       `답을 듣고 위 '은행이 어떻게 줄여 주나요?'에서 맞는 쪽을 누르세요.`;
     ui.sayFee.innerHTML =
-      `→ 이 계산으로는 약 <b>${num(s.fee)}원</b>입니다. 많이 다르면 아래 수수료 설정을 고쳐 다시 보세요.`;
+      `→ 이 계산으로는 약 <b>${num(s.fee)}원</b>입니다. 많이 다르면 위 [중도상환수수료 · 설정]에서 고쳐 다시 보세요.`;
 
     // 금리가 낮으면 "갚는 게 이득"이라는 결론이 뒤집힐 수 있습니다.
     // 이 도구는 예금에 뒀을 때의 이자를 계산에 넣지 않으므로 그때만 알립니다.
@@ -841,13 +920,29 @@ ui.deriveApply.addEventListener('click', () => {
 // ── 수수료 설정 팝업 ───────────────────────────────────────────
 // 값은 고치는 즉시 뒤 화면에 반영되므로 '확인'은 닫기와 같습니다.
 
+/** iOS 15.3 이하 등 <dialog> 를 모르는 브라우저가 남아 있습니다 */
+const canModal = typeof ui.feeDialog.showModal === 'function';
+
 function openFee(): void {
-  ui.feeDialog.showModal();
-  document.documentElement.classList.add('sheetopen');
+  if (canModal) {
+    ui.feeDialog.showModal();
+    // 뒤 화면이 따라 움직이면 어느 쪽을 만지는지 흐려집니다.
+    // 아래 대체 경로는 흐름 안에 펼쳐지므로 잠그면 안 됩니다.
+    document.documentElement.classList.add('sheetopen');
+    return;
+  }
+  ui.feeDialog.setAttribute('open', '');
+  ui.feeDialog.scrollIntoView({ block: 'center' });
 }
 
 function closeFee(): void {
-  ui.feeDialog.close();
+  if (canModal) {
+    ui.feeDialog.close();
+    return;
+  }
+  ui.feeDialog.removeAttribute('open'); // close 이벤트가 없어 뒷정리도 직접 합니다
+  document.documentElement.classList.remove('sheetopen');
+  ui.feeOpen.scrollIntoView({ block: 'center' });
 }
 
 ui.feeOpen.addEventListener('click', openFee);
@@ -933,7 +1028,9 @@ ui.reset.addEventListener('click', () => {
   // 화면이 차 있고, 그게 내가 넣은 값인지 예시인지 구분되지 않습니다.
   touched = false;
   forget();
-  history.replaceState(null, '', location.pathname + location.search);
+  // 히스토리에 실어 둔 공유 링크 값까지 같이 비웁니다 — 지웠는데
+  // 뒤로 가기 한 번에 되살아나면 지운 것이 아닙니다.
+  replaceUrl(null, location.pathname + location.search);
   ui.copyFall.hidden = true;
   ui.deriveBox.hidden = true;
   ui.deriveToggle.textContent = '남은 회차로 계산';
